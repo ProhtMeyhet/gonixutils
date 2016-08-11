@@ -1,0 +1,6 @@
+package signal
+
+const(
+	ERROR_FINDING_PROCESS	= 20
+	ERROR_SENDING_SIGNAL	= 21
+)

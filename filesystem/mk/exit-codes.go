@@ -1,0 +1,7 @@
+package mk
+
+const(
+	ERROR_CREATE_DIRECTORY	= 20
+	ERROR_CREATE_FILE	= 21
+	ERROR_LINKING		= 22
+)
