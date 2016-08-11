@@ -25,8 +25,7 @@ type Output struct {
 
 func NewOutput(out, e io.Writer) (output *Output) {
 	output = &Output { outwrite: out, ewrite: e}
-	output.out = make(chan *Message, GOROUTINE_LIMIT_RESOURCE)
-	output.eout = make(chan *Message, GOROUTINE_LIMIT_RESOURCE)
+	output.out = make(chan *Message, 10); output.eout = make(chan *Message, 2)
 
 	output.waitGroup.Add(1)
 	go func() {
@@ -37,8 +36,9 @@ func NewOutput(out, e io.Writer) (output *Output) {
 				if !ok { break infinite }
 				fmt.Fprintf(output.outwrite, message.Format, message.Values...)
 			case emessage, ok := <-output.eout:
-				if !ok { break infinite }
-				fmt.Fprintf(output.ewrite, emessage.Format, emessage.Values...)
+				if ok {
+					fmt.Fprintf(output.ewrite, emessage.Format, emessage.Values...)
+				}
 			}
 		}
 		output.waitGroup.Done()

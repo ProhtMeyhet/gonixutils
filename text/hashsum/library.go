@@ -3,7 +3,6 @@ package hash
 import(
 	"encoding/hex"
 	"hash"
-	"io"
 
 	"crypto/sha1"
 	"crypto/md5"
@@ -52,42 +51,31 @@ func doHash(input *Input, factory func() hash.Hash) (exitCode uint8) {
 	return
 }
 
+// hash one file, after that restart for another file read from list
 func hash1(input *Input, output *abstract.Output, factory func() hash.Hash, list chan string) (exitCode uint8) {
 	buffers := make(chan NamedBuffer, 50)
-	handlerBuffer := make([]byte, abstract.READ_BUFFER_MAXIMUM_SIZE)
 	work := parallel.NewWork(1); hasher := factory(); first := true
 
+	// open and read in one thread
 	work.Feed(func() {
 		defer close(buffers)
-		for path := range list {
-			if input.Verbose {
-				output.Write("processing: %v\n", path)
-			}
 
-			helper := iotool.ReadOnly().ToggleFileAdviceReadSequential()
-			if input.NoCache { helper.ToggleFileAdviceDontNeed() }
-			handler, e := iotool.Open(helper, path)
-			if output.WriteEMessage(e, "'%v' (iotool.Open)", path) {
-				if iotool.IsNotExist(e) {
-					exitCode = abstract.ERROR_FILE_NOT_FOUND
-				// all other exit codes are more important. don't overwrite them
-				} else if exitCode == 0 {
-					exitCode = abstract.ERROR_OPENING_FILE
-				}
-				continue
-			}
-
-			if e := readFile(path, buffers, handler, handlerBuffer); e != nil {
-				output.WriteEMessage(e, " '%v'", path)
+		helper := iotool.ReadOnly().ToggleFileAdviceReadSequential()
+		if input.NoCache { helper.ToggleFileAdviceDontNeed() }
+		helper.SetE(func(name string, e error) {
+			output.WriteEMessage(e, " on '%v'", name)
+			if iotool.IsNotExist(e) {
+				exitCode = abstract.ERROR_FILE_NOT_FOUND
+			} else {
 				exitCode = abstract.ERROR_READING
 			}
+		})
 
-			// no defer, otherwise the handlers will stay open until ALL handlers are processed
-			handler.Close()
-		}
+		ReadFiles(helper, buffers, list)
 	})
 
-	work.Start(func() {
+	// hashing in another thread
+	work.Run(func() {
 		for buffered := range buffers {
 			if buffered.reset && !first {
 				hasher.Reset()
@@ -96,7 +84,7 @@ func hash1(input *Input, output *abstract.Output, factory func() hash.Hash, list
 			}
 
 			if buffered.done {
-				output.Write("%v %v\n", hex.EncodeToString(hasher.Sum(nil)), buffered.name)
+				output.Write("%v  %v\n", hex.EncodeToString(hasher.Sum(nil)), buffered.name)
 				continue
 			}
 
@@ -112,37 +100,9 @@ func hash1(input *Input, output *abstract.Output, factory func() hash.Hash, list
 		}
 	})
 
-	work.Wait()
-
 	return
 }
 
-func readFile(name string, buffers chan NamedBuffer, handler iotool.FileInterface, handlerBuffer []byte) (e error) {
-	namedBuffer := NewNamedBuffer(name); namedBuffer.reset = true; namedBuffer.buffer = make([]byte, len(handlerBuffer))
-	// avoid e shadowing
-	read := 0
-infinite:
-	for {
-		read, e = handler.Read(handlerBuffer)
-		if e != nil {
-			if e == io.EOF { e = nil; break infinite }
-			// TODO find out what errors can happen here and handle them
-			break infinite
-		}
-
-	// FIXME i thought the following line would copy. doesn't seem to be or bug.
-	//	buffer <-handlerBuffer[:read]
-		namedBuffer.read = read
-		copy(namedBuffer.buffer, handlerBuffer[:read])
-		buffers <-namedBuffer
-		namedBuffer.reset = false
-	}
-
-	namedBuffer.done = true
-	buffers <-namedBuffer
-
-	return
-}
 // hash a file or stdin
 func Md5(input *Input) (exitCode uint8) {
 	return doHash(input, md5.New)
