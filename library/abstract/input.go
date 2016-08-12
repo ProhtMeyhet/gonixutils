@@ -6,11 +6,13 @@ import(
 )
 
 type Input struct {
-	Stdin io.Reader
-	Stdout io.Writer
-	Stderr io.Writer
+	Stdin	io.Reader
+	Stdout	io.Writer
+	Stderr	io.Writer
 
-	Verbose, Help, Version bool
+	VerboseLevel	uint
+
+	Verbose, Help, Version	bool
 }
 
 func (input *Input) InitCli() {

@@ -41,6 +41,17 @@ func NewOutput(out, e io.Writer) (output *Output) {
 				}
 			}
 		}
+
+		// read out all errors
+	infiniteE:
+		for {
+			select {
+			case emessage, ok := <-output.eout:
+				if !ok { break infiniteE }
+				fmt.Fprintf(output.ewrite, emessage.Format, emessage.Values...)
+			}
+		}
+
 		output.waitGroup.Done()
 	}()
 
@@ -59,8 +70,8 @@ func (output *Output) WriteE(e error) bool {
 
 func (output *Output) WriteEMessage(e error, format string, values ...interface{}) bool {
 	if e == nil { return false }
-	format = "%v: " + format
-	v := make([]interface{}, len(values)); v = append(v, e); v = append(v, values...)
+	format = "%v: " + format + "\n"
+	v := make([]interface{}, 0); v = append(v, e); v = append(v, values...)
 	output.eout <-&Message{ Format: format, Values: v }
 	return true
 }

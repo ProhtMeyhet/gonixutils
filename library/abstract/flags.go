@@ -9,10 +9,10 @@ import(
 )
 
 type Flags struct {
-	questionMarkCount int
+	questionMarkCount uint
 	HasVerbose, HasHelp, HasVersion bool
 	// tells you the level of verbosiness the user wants
-	VerboseLevel int
+	FlagVerboseLevel uint
 	Debug bool
 }
 
@@ -55,7 +55,7 @@ func (flags *Flags) ParseOption(option *optarg.Option) bool {
 	return false
 }
 
-func (flags *Flags) ParseFinally() (bool, bool, bool) {
+func (flags *Flags) ParseFinally() (bool, bool, bool, uint) {
 	switch flags.questionMarkCount {
 		case 1:
 			flags.HasHelp = true
@@ -64,12 +64,12 @@ func (flags *Flags) ParseFinally() (bool, bool, bool) {
 	}
 
 	if flags.questionMarkCount >= 3 {
-			flags.HasVerbose = true
+		flags.HasVerbose = true
+		flags.FlagVerboseLevel = flags.questionMarkCount - 2
 	}
 
-	flags.VerboseLevel = flags.questionMarkCount - 2
 
-	return flags.HasHelp, flags.HasVerbose, flags.HasVersion
+	return flags.HasHelp, flags.HasVersion, flags.HasVerbose, flags.FlagVerboseLevel
 }
 
 func (flags *Flags) Parse() <-chan *optarg.Option {
