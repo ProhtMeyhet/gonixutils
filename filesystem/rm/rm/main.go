@@ -1,6 +1,7 @@
 package main
 
 import(
+	"os"
 
 	gonixutils "github.com/ProhtMeyhet/gonixutils/filesystem/rm"
 )
@@ -13,5 +14,5 @@ func main() {
 	input := flags.GetInput()
 	input.InitCli()
 
-	gonixutils.Rm(input)
+	os.Exit(int(gonixutils.Rm(input)))
 }

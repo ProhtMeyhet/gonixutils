@@ -7,12 +7,19 @@ import (
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/ProhtMeyhet/gonixutils/library/abstract"
 )
 
 // remove filesystem entries given in the input.PathList
-func Rm(input *Input) (e error) {
+func Rm(input *Input) (exitCode uint8) {
 	for _, path := range input.PathList {
-		e, _ = Remove(path, input); if e != nil { io.WriteString(input.Stderr, e.Error() + "\n") }
+		e, _ := Remove(input, path)
+		if e != nil {
+			io.WriteString(input.Stderr, e.Error() + "\n")
+			// FIXME more fine grained error
+			exitCode = abstract.FAILED
+		}
 	}
 
 	return
@@ -21,7 +28,7 @@ func Rm(input *Input) (e error) {
 // remove one filesystem entry.
 // with input.Recursive, remove all filesystem entries within a directory and the directory.
 // with input.Interactive, ask user before remove.
-func Remove(path string, input *Input) (e error, interactiveAll bool) {
+func Remove(input *Input, path string) (e error, interactiveAll bool) {
 	stat, e := os.Lstat(path); if e != nil { return }
 
 	if stat.IsDir() {
@@ -44,9 +51,8 @@ func Remove(path string, input *Input) (e error, interactiveAll bool) {
 
 // removes a directory, if input.Recurive also all it's contents.
 func removeDir(path string, input *Input) (e error, all bool) {
-	fd, e := os.Open(path); if e != nil { return }
-	names, e := fd.Readdirnames(-1); if e != nil { return }
-	fd.Close()
+	fd, e := os.Open(path); if e != nil { return }; allRemoved := false
+	names, e := fd.Readdirnames(-1); if e != nil { return }; fd.Close()
 
 	if input.Interactive {
 		if len(names) == 0 {
@@ -57,21 +63,28 @@ func removeDir(path string, input *Input) (e error, all bool) {
 	}
 
 	// allow removing of empty directories without input.Recursive
+	if len(names) == 0 {
+		goto remove
+	}
+
+	// cannot remove due to recursive not set
 	if !input.Recursive && len(names) > 0 {
 		return errors.New(fmt.Sprintf("rm: '%s': directory not empty!", path)), false
 	}
 
-	allRemoved := false
+	// remove recursivly
 	for _, name := range names {
-		e, allRemoved = RemoveAll(path + string(os.PathSeparator) + name, input)
+		e, allRemoved = Remove(input, path + string(os.PathSeparator) + name)
 		if e != nil { return e, false }
 	}
 
+	// recursivly remove failed, can't remove parent
 	if !allRemoved {
 		if input.Interactive { fmt.Fprintf(input.Stdout, "cannot remove '%s', not empty\n", path) }
 		return nil, false
 	}
 
+remove:
 	if input.Interactive && !YesOrNo(input, "rm: remove directory '%s'? (y/N) ", path) {
 		return
 	}

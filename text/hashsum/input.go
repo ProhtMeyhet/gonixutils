@@ -8,14 +8,15 @@ import(
 type Input struct {
 	abstract.Input
 
-	PathList	[]string
-	Type		Type
+	PathList		[]string
+	Type			Type
 
-	Salt		[]byte
+	Salt			[]byte
 
-	Quiet		bool
-	NoCache		bool
-	NumberOfWorkers uint
-
-	currentPath	string
+	Compare			bool
+	OrderCompareOutput	bool
+	Quiet			bool
+	NoCache			bool
+	NumberOfWorkers		uint
+	Idiot			uint
 }

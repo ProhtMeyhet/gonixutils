@@ -47,7 +47,7 @@ func (flags *RmFlags) Parse() {
 		}
 	}
 
-	flags.Help, flags.Verbose, flags.Version = flags.ParseFinally()
+	flags.Help, flags.Version, flags.Verbose, flags.VerboseLevel = flags.ParseFinally()
 
 	for _, name := range optarg.Remainder {
 		// bash adds sometimes an empty argument at the end...

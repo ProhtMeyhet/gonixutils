@@ -10,12 +10,15 @@ const(
 	// Aus dem Hintergrund müsste Rahn schießen, Rahn schießt - TOR, TOR, TOR, TOR!
 	SUCCESS		= 0
 
+	// for historic reasons, say 1 is FAILED
+	FAILED		= 1
+
 	// from a given list, at least one part failed. check stderr.
-	PARTLY		= 1
+	PARTLY		= 2
 
 
 	/*
-	*  SUCCESS values 2 - 8 are reserved for individual programs
+	*  SUCCESS values 3 - 8 are reserved for individual programs
 	*/
 
 
@@ -27,9 +30,6 @@ const(
 
 	// maximum success. used for if exitCode > SUCCESSFUL
 	SUCCESSFUL	= 10
-
-	// failed. used for boolean testing.
-	FAILED		= 11
 
 
 	/*

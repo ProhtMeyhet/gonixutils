@@ -29,10 +29,12 @@ func (flags *HashFlags) GetInput() *hash.Input {
 
 func (flags *HashFlags) Parse() {
 	optarg.Header("Options for " + os.Args[0])
-	optarg.Add("s", "salt", "first salt with this salt", "")
+//	optarg.Add("s", "salt", "first salt with this salt", "")
 //	optarg.Add("r", "random-salt", "add a random salt of this length and print it after file name", 24)
+	optarg.Add("c", "compare", "read sums from the FILEs and check them", false)
+	optarg.Add("i", "idiot", "set the fail threshold for compare, when the hash function is detected as wrong", 10)
 	optarg.Add("q", "quiet", "only print errors", false)
-	optarg.Add("w", "workers", "number of workers. if 0, the minimum of number of cpus * 2 or the number of input files", 0)
+//	optarg.Add("w", "workers", "number of workers. if 0, the minimum of number of cpus * 2 or the number of input files", 0)
 	if abstract.SET_FILE_ADVICE_DONTNEED {
 		optarg.Add("x", "no-cache", "try not to leave caches behind (set file advice dont need)", false)
 	}
@@ -44,6 +46,10 @@ func (flags *HashFlags) Parse() {
 		switch option.ShortName {
 		case "x":
 			flags.NoCache = option.Bool()
+		case "c":
+			flags.Compare = option.Bool()
+		case "i":
+			flags.Idiot = option.Uint()
 		case "q":
 			flags.Quiet = option.Bool()
 		case "w":
@@ -54,7 +60,7 @@ func (flags *HashFlags) Parse() {
 		}
 	}
 
-	flags.Help, flags.Verbose, flags.Version = flags.ParseFinally()
+	flags.Help, flags.Version, flags.Verbose, flags.VerboseLevel = flags.ParseFinally()
 
 	for key, name := range optarg.Remainder {
 		// bash adds sometimes an empty argument at the end...
@@ -66,29 +72,10 @@ func (flags *HashFlags) Parse() {
 		}
 	}
 
-	switch flags.unparsedType {
-	case "sha512", "sha512sum":
-		flags.Type = hash.SHA512
-	case "md5", "md5sum":
-		flags.Type = hash.MD5
-	case "sha1", "sha1sum":
-		flags.Type = hash.SHA1
-	case "sha256", "sha256sum":
-		flags.Type = hash.SHA256
-	case "sha224", "sha224sum":
-		flags.Type = hash.SHA224
-	case "sha384", "sha384sum":
-		flags.Type = hash.SHA384
-	case "sha512a", "sha512asum", "sha512_224", "sha512224":
-		flags.Type = hash.SHA512_224
-	case "sha512b", "sha512bsum", "sha512_256", "sha512256":
-		flags.Type = hash.SHA512_256
-	case "adler32", "adler32sum":
-		flags.Type = hash.ADLER32
-	case "crc32", "crc32sum":
-		flags.Type = hash.CRC32
-	case "crc64", "crc64sum":
-		flags.Type = hash.CRC64
+	flags.Type = hash.ParseType(flags.unparsedType)
+
+	if flags.Idiot == 0 {
+		flags.Idiot = 10
 	}
 }
 
