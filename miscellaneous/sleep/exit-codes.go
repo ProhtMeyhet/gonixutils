@@ -1,0 +1,7 @@
+package sleep
+
+const(
+	EXIT_INTERRUPTED			= 20
+	EXIT_UNTIL_INVALID			= 21
+	EXIT_TIMETRAVEL_NOT_INVENTED_YET	= 22
+)
