@@ -9,19 +9,18 @@ import(
 
 func ReadFile(helper *iotool.FileHelper, buffers chan NamedBuffer, path string) (e error) {
 	handlerBuffer := make([]byte, helper.ReadSize())
-	return readFile(helper, buffers, handlerBuffer, path, true)
+	return readFile(helper, buffers, handlerBuffer, path)
 }
 
 // reads file sequential; errors are reported via helper.E
 func ReadFiles(helper *iotool.FileHelper, buffers chan NamedBuffer, paths <-chan string) {
-	handlerBuffer := make([]byte, helper.ReadSize()); first := true
+	handlerBuffer := make([]byte, helper.ReadSize())
 	for path := range paths {
-		if e := readFile(helper, buffers, handlerBuffer, path, first); e != nil {
+		if e := readFile(helper, buffers, handlerBuffer, path); e != nil {
 			// has already been raised
 			if iotool.IsNotExist(e) { continue }
 			helper.RaiseError(path, e)
 		}
-		first = false
 	}
 }
 
@@ -31,10 +30,9 @@ func ReadFilesFromList(helper *iotool.FileHelper, buffers chan NamedBuffer, path
 }
 
 // to avoid allocation in ReadFiles
-func readFile(helper *iotool.FileHelper, buffers chan NamedBuffer, handlerBuffer []byte, path string, first bool) (e error) {
+func readFile(helper *iotool.FileHelper, buffers chan NamedBuffer, handlerBuffer []byte, path string) (e error) {
 	handler, e := iotool.Open(helper, path); if e != nil { return }; defer handler.Close()
-	namedBuffer := NewNamedBuffer(path); namedBuffer.buffer = make([]byte, len(handlerBuffer))
-	if !first { namedBuffer.reset = true }; read := 0 // avoid e shadowing
+	namedBuffer := NewNamedBuffer(path); namedBuffer.buffer = make([]byte, len(handlerBuffer)); read := 0 // avoid e shadowing
 
 infinite:
 	for {
@@ -50,7 +48,6 @@ infinite:
 		namedBuffer.read = read
 		copy(namedBuffer.buffer, handlerBuffer[:read])
 		buffers <-namedBuffer
-		namedBuffer.reset = false
 	}
 
 	namedBuffer.done = true

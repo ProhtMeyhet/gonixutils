@@ -7,7 +7,6 @@ import(
 type NamedBuffer struct {
 	name string
 	buffer []byte
-	reset bool
 	done bool
 	read int
 }

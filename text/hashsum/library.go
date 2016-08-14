@@ -36,7 +36,7 @@ func doHash(input *Input, factory func() hash.Hash) (exitCode uint8) {
 
 // hash one file, get it's path via list. when finished, reset and restart until list is closed.
 func hash1(input *Input, output *abstract.Output, factory func() hash.Hash, list chan string) (exitCode uint8) {
-	work := parallel.NewWork(1); hasher := factory(); first := true
+	work := parallel.NewWork(1); hasher := factory()
 	buffers := make(chan NamedBuffer, work.SuggestFileBufferSize())
 
 	// open and read in one thread
@@ -48,14 +48,9 @@ func hash1(input *Input, output *abstract.Output, factory func() hash.Hash, list
 	// hashing in another thread
 	work.Run(func() {
 		for buffered := range buffers {
-			if buffered.reset && !first {
-				hasher.Reset()
-			} else {
-				first = false
-			}
-
 			if buffered.done {
 				output.Write("%v  %v\n", hex.EncodeToString(hasher.Sum(nil)), buffered.name)
+				hasher.Reset()
 				continue
 			}
 
