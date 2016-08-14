@@ -17,6 +17,8 @@ type SleepFlags struct {
 	abstract.Flags
 	sleep.Input
 
+	hasError bool
+
 	unparsedUntil string
 }
 
@@ -53,6 +55,7 @@ func (flags *SleepFlags) Parse() {
 			if strings.HasPrefix(e.Error(), "time: missing unit in duration") {
 				name += "s"; goto again
 			}
+			flags.hasError = true
 			fmt.Fprintf(os.Stderr, "couldn't parse duration '%v': '%v' -- ignoring\n", name, e)
 		} else {
 			flags.Durations = append(flags.Durations, duration)
@@ -75,8 +78,12 @@ func (flags *SleepFlags) Validate() {
 	flags.Flags.Validate()
 
 	if len(flags.Durations) == 0 && !flags.DoUntil {
-		flags.Usage()
-		os.Exit(abstract.ERROR_NO_INPUT)
+		if !flags.hasError {
+			flags.Usage()
+			os.Exit(abstract.ERROR_NO_INPUT)
+		} else {
+			os.Exit(abstract.ERROR_PARSING)
+		}
 	}
 }
 

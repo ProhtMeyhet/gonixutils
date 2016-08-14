@@ -12,8 +12,7 @@ import(
 var now time.Time
 
 func Sleep(input *Input) (exitCode uint8) {
-	now = time.Now()
-	duration := Sum(input.Durations...)
+	duration := time.Duration(1); if now.IsZero() { now = time.Now() }
 	if input.DoUntil {
 	again:
 		if !now.Before(input.Until) {
@@ -22,16 +21,19 @@ func Sleep(input *Input) (exitCode uint8) {
 		}
 
 		duration = input.Until.Sub(now); if duration <= 0 { goto again }
+	} else {
+		duration = Sum(input.Durations...)
 	}
 
 	if input.Verbose {
+		// FIXME drop the nanoseconds from duration output
 		fmt.Fprintf(input.Stdout, "sleeping for %v (pid: %v)\n", duration, os.Getpid())
 	}
 
 	time.Sleep(duration)
 
-	if input.Verbose {
-		if input.Format == "" { input.Format = STAMP104 }
+	if input.VerboseLevel >= 2 {
+		if input.Format == "" { input.Format = STAMP2 }
 		fmt.Fprintf(input.Stdout, "It is now %v - Thank you for choosing gonixutils.\n", time.Now().Format(input.Format))
 	}
 
@@ -55,4 +57,9 @@ again:
 			goto again
 		}
 	}
+}
+
+// resets the globally used time.now
+func Reset() {
+	now = time.Now()
 }
