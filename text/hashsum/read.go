@@ -16,11 +16,7 @@ func ReadFile(helper *iotool.FileHelper, buffers chan NamedBuffer, path string) 
 func ReadFiles(helper *iotool.FileHelper, buffers chan NamedBuffer, paths <-chan string) {
 	handlerBuffer := make([]byte, helper.ReadSize())
 	for path := range paths {
-		if e := readFile(helper, buffers, handlerBuffer, path); e != nil {
-			// has already been raised
-			if iotool.IsNotExist(e) { continue }
-			helper.RaiseError(path, e)
-		}
+		readFile(helper, buffers, handlerBuffer, path)
 	}
 }
 
