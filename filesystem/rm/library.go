@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/ProhtMeyhet/libgosimpleton/iotool"
+
 	"github.com/ProhtMeyhet/gonixutils/library/abstract"
 )
 
@@ -28,7 +30,7 @@ func Rm(input *Input) (exitCode uint8) {
 // remove one filesystem entry.
 // with input.Recursive, remove all filesystem entries within a directory and the directory.
 // with input.Interactive, ask user before remove.
-func Remove(input *Input, path string) (e error, interactiveAll bool) {
+func Remove(input *Input, path string) (e error, allRemoved bool) {
 	stat, e := os.Lstat(path); if e != nil { return }
 
 	if stat.IsDir() {
@@ -50,9 +52,8 @@ func Remove(input *Input, path string) (e error, interactiveAll bool) {
 }
 
 // removes a directory, if input.Recurive also all it's contents.
-func removeDir(path string, input *Input) (e error, all bool) {
-	fd, e := os.Open(path); if e != nil { return }; allRemoved := false
-	names, e := fd.Readdirnames(-1); if e != nil { return }; fd.Close()
+func removeDir(path string, input *Input) (e error, allRemoved bool) {
+	names, e := iotool.ListDirectory(path); if e != nil { return }
 
 	if input.Interactive {
 		if len(names) == 0 {
@@ -75,13 +76,13 @@ func removeDir(path string, input *Input) (e error, all bool) {
 	// remove recursivly
 	for _, name := range names {
 		e, allRemoved = Remove(input, path + string(os.PathSeparator) + name)
-		if e != nil { return e, false }
+		if e != nil { return }
 	}
 
 	// recursivly remove failed, can't remove parent
 	if !allRemoved {
 		if input.Interactive { fmt.Fprintf(input.Stdout, "cannot remove '%s', not empty\n", path) }
-		return nil, false
+		return
 	}
 
 remove:
@@ -89,14 +90,14 @@ remove:
 		return
 	}
 
-	return os.Remove(path), true
+	return os.Remove(path), allRemoved
 }
 
 // return true on "y", "Y" and "yes"; otherwise false
 func YesOrNo(input *Input, question string, replace ...string) bool {
 	answer := ""
 
-	fmt.Fprintf(input.Stdout, fmt.Sprintf(question, ToInterfaceList(replace)...))
+	fmt.Fprintf(input.Stdout, fmt.Sprintf(question, ToInterfaceList(replace...)...))
 	_, e := fmt.Fscanln(input.Stdin, &answer); if e != nil { goto out }
 
 	if answer == "y" || answer == "Y" ||  answer == "yes" {
@@ -107,12 +108,15 @@ out:
 	return false
 }
 
+// alias
+func Delete(input *Input, path string) {
+	return Remove(input, path)
+}
+
 // TODO move to libgosimpleton
-func ToInterfaceList(input []string) (result []interface{}) {
+func ToInterfaceList(input ...string) (result []interface{}) {
 	result = make([]interface{}, len(input))
 	for key, entry := range input {
 		result[key] = entry
-	}
-
-	return
+	}; return
 }
