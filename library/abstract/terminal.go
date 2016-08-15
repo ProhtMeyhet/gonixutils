@@ -5,30 +5,31 @@ import (
     "unsafe"
 )
 
-type Terminal struct {
-
+type TerminalInfo struct {
+	winsize *winsize
 }
 
-func NewTerminal() *Terminal {
-	return &Terminal{}
+func NewTerminalInfo() *TerminalInfo {
+	return &TerminalInfo{}
 }
 
 type winsize struct {
-    Row    uint16
-    Col    uint16
-    Xpixel uint16
-    Ypixel uint16
+	Row    uint16
+	Col    uint16
+	Xpixel uint16
+	Ypixel uint16
 }
 
-func (terminal *Terminal) GetWidth() int {
-    ws := &winsize{}
-    retCode, _, errno := syscall.Syscall(syscall.SYS_IOCTL,
-        uintptr(syscall.Stdin),
-        uintptr(syscall.TIOCGWINSZ),
-        uintptr(unsafe.Pointer(ws)))
+func (terminal *TerminalInfo) Width() int {
+	if terminal.winsize == nil {
+		terminal.winsize = &winsize{}
+		retCode, _, errno := syscall.Syscall(syscall.SYS_IOCTL, uintptr(syscall.Stdin),
+		uintptr(syscall.TIOCGWINSZ), uintptr(unsafe.Pointer(terminal.winsize)))
 
-    if int(retCode) == -1 {
-        panic(errno) //TODO
-    }
-    return int(ws.Col)
+		if int(retCode) == -1 {
+			panic(errno) //TODO
+		}
+	}
+
+	return int(terminal.winsize.Col)
 }

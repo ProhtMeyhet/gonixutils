@@ -7,7 +7,7 @@ import(
 )
 
 func main() {
-	flags := NewMkFlags()
+	flags := NewLsFlags()
 	flags.Parse()
 	flags.Validate()
 

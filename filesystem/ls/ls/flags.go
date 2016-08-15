@@ -1,7 +1,7 @@
 package main
 
 import(
-	"fmt"
+//	"fmt"
 
 	"os"
 
@@ -26,33 +26,30 @@ func (flags *LsFlags) GetInput() *ls.Input {
 
 func (flags *LsFlags) Parse() {
 	optarg.Header("Options for " + os.Args[0])
-	optarg.Add("f", "file", "create file", false)
-	optarg.Add("t", "temporary", "create a unique named temporary file under " +
-				os.TempDir() + " and print its name. file input are prefixes.", false)
-	optarg.Add("l", "link", "create link", false)
+	optarg.Add("c", "color", "set color true/false", true)
+	optarg.Add("u", "unordered", "don't order output", false)
+	optarg.Add("l", "list", "print files by line with details", false)
+	optarg.Add("n", "new-line", "print each entry by line", false)
+	optarg.Add("a", "all", "print everything, including . and ..", false)
 
-	optarg.Header("Behaviour changing:")
-	optarg.Add("r", "recursive", "create directorys recursive (works with files too)", false)
-	optarg.Add("s", "symbolic", "create soft/symbolic link. implies --link", false)
-// TODO optarg.Add("p", "permissions", "set create permissions", false)
+//	optarg.Header("Behaviour changing:")
+//	optarg.Add("r", "recursive", "create directorys recursive (works with files too)", false)
 
 	flags.AddGeneralOptions()
 
 	for option := range optarg.Parse() {
 		if flags.ParseOption(option) { continue }
 		switch option.ShortName {
-		case "f":
-			flags.File = option.Bool()
-		case "t":
-			flags.Temporary = option.Bool()
+		case "a":
+			flags.All = option.Bool()
+		case "c":
+			flags.NoColor = option.Bool()
 		case "l":
-			flags.Link = option.Bool()
-
-		case "r":
-			flags.Recursive = option.Bool()
-		case "s":
-			flags.Link = option.Bool()
-			flags.Symbolic = option.Bool()
+			flags.Detail = option.Bool()
+		case "n":
+			flags.Lines = option.Bool()
+		case "u":
+			flags.NoSort = option.Bool()
 		}
 	}
 
@@ -61,22 +58,15 @@ func (flags *LsFlags) Parse() {
 	for _, name := range optarg.Remainder {
 		// bash adds sometimes an empty argument at the end...
 		if name == "" { continue }
-		flags.PathList = append(flags.PathList, name)
+		flags.Paths = append(flags.Paths, name)
+	}
+
+	if len(flags.Paths) == 0 {
+		flags.Paths = append(flags.Paths, ".")
 	}
 }
 
 func (flags *LsFlags) Validate() {
 	flags.Flags.Validate()
-
-	if len(flags.PathList) == 0 && !flags.Temporary {
-		flags.Usage()
-		os.Exit(abstract.ERROR_NO_INPUT)
-	}
-
-	// TODO more checking
-	if flags.Temporary && flags.Recursive {
-		fmt.Fprintf(os.Stderr, "%v\n", "cannot recursivly create Temporary file!")
-		os.Exit(abstract.ERROR_INVALID_ARGUMENT)
-	}
 }
 
