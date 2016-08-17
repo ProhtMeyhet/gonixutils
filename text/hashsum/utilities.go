@@ -7,7 +7,7 @@ import(
 	"github.com/ProhtMeyhet/gonixutils/library/abstract"
 )
 
-func prepareFileHelper(input *Input, output *abstract.Output, exitCode *uint8) (helper *iotool.FileHelper) {
+func prepareFileHelper(input *Input, output abstract.OutputInterface, exitCode *uint8) (helper *iotool.FileHelper) {
 	helper = iotool.ReadOnly().ToggleFileAdviceReadSequential()
 	if input.NoCache { helper.ToggleFileAdviceDontNeed() }
 	helper.SetE(func(name string, e error) {

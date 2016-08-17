@@ -35,7 +35,7 @@ func doHash(input *Input, factory func() hash.Hash) (exitCode uint8) {
 }
 
 // hash one file, get it's path via list. when finished, reset and restart until list is closed.
-func hash1(input *Input, output *abstract.Output, factory func() hash.Hash, list chan string) (exitCode uint8) {
+func hash1(input *Input, output abstract.OutputInterface, factory func() hash.Hash, list chan string) (exitCode uint8) {
 	work := parallel.NewWork(1); hasher := factory()
 	buffers := make(chan NamedBuffer, work.SuggestFileBufferSize())
 

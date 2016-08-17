@@ -26,7 +26,7 @@ func Compare(input *Input) (exitCode uint8) {
 	return
 }
 
-func compare(input *Input, output *abstract.Output, work *parallel.WorkString) (exitCode uint8) {
+func compare(input *Input, output abstract.OutputInterface, work *parallel.WorkString) (exitCode uint8) {
 	work.Start(func() {
 		exitCode = compare1(input, output, work.Talk)
 	})
@@ -37,7 +37,7 @@ func compare(input *Input, output *abstract.Output, work *parallel.WorkString) (
 }
 
 
-func compare1(input *Input, output *abstract.Output, list chan string) (exitCode uint8) {
+func compare1(input *Input, output abstract.OutputInterface, list chan string) (exitCode uint8) {
 	notFound, unequalHashes, wrongHashFunction, hashlen, expectedHashLen := 0, 0, uint(0), 0, HashLen(input.Type)
 	reader, helper := &bufio.Reader{}, prepareFileHelper(input, output, &exitCode)
 	work := parallel.NewWork(0); talk := make(chan *HashPath, work.SuggestBufferSize(0))
