@@ -15,7 +15,7 @@ import(
 	"github.com/ProhtMeyhet/gonixutils/library/abstract"
 )
 
-func list(input *Input, paths []string, mainOutput abstract.OutputInterface) (exitCode uint8) {
+func List(input *Input, paths []string, mainOutput abstract.OutputInterface) (exitCode uint8) {
 	work := parallel.NewStringFeeder(paths); initialise(input, mainOutput); directoryCount := 0
 	work.Start(func() {
 		iwork := parallel.NewWork(work.Workers())
@@ -90,6 +90,8 @@ func initialise(input *Input, mainOutput abstract.OutputInterface) {
 	} else {
 		input.writeEntry = WriteEntryShort
 	}
+
+	if input.SortReversed { output.ToggleSortReversed() }
 
 	if !input.NoSort {
 		// before sorting remove . from files
