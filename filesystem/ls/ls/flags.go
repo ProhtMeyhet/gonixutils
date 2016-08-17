@@ -30,7 +30,8 @@ func (flags *LsFlags) Parse() {
 	optarg.Add("c", "color", "set color true/false", true)
 	optarg.Add("l", "list", "print files by line with details", false)
 	optarg.Add("n", "new-line", "print each entry by line", false)
-	optarg.Add("s", "sort", "set sort true/false, since multithreading the order without sort is likely random.", true)
+	optarg.Add("s", "sort", "set sort true/false, since multithreading the order without sort is likely random", true)
+	optarg.Add("r", "reverse", "sort reverse", true)
 	optarg.Add("u", "union", "treat all entries as if they are in the same directory", true)
 
 //	optarg.Header("Behaviour changing:")
@@ -49,6 +50,8 @@ func (flags *LsFlags) Parse() {
 			flags.Detail = option.Bool()
 		case "n":
 			flags.Lines = option.Bool()
+		case "r":
+			flags.SortReversed = option.Bool()
 		case "s":
 			flags.NoSort = option.Bool()
 		case "u":

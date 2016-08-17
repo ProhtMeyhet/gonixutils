@@ -54,6 +54,8 @@ type Output struct {
 	orderBySubBufferNames	bool
 	orderBySubBufferKeys	bool
 
+	sortReversed		bool
+
 	// public Lock() for public, inner mutex to guard assignment to maps
 	innerMutex		sync.Mutex
 }
@@ -80,6 +82,10 @@ func NewTabbedOutput(out, e io.Writer) OutputInterface {
 func (output *Output) NewSubBuffer(name string, key int) OutputInterface {
 	buffer := &Output{}
 	buffer.linesManual = output.linesManual
+	buffer.printSubBufferNames = output.printSubBufferNames
+	buffer.orderBySubBufferNames = output.orderBySubBufferNames
+	buffer.orderBySubBufferKeys = output.orderBySubBufferKeys
+	buffer.sortReversed = output.sortReversed
 
 	// TODO is this correct? or is there a better alternative?
 	bufferbyte := make([]byte, 0); bytesBuffer := bytes.NewBuffer(bufferbyte)
@@ -257,6 +263,8 @@ func (output *Output) writeTo(to io.Writer) {
 	}
 }
 
+func (output *Output) SortReversed() bool { return output.sortReversed }
+func (output *Output) ToggleSortReversed() { output.sortReversed = !output.sortReversed }
 func (output *Output) PrintSubBufferNames() bool { return output.printSubBufferNames }
 func (output *Output) TogglePrintSubBufferNames() { output.printSubBufferNames = !output.printSubBufferNames }
 func (output *Output) OrderBySubBufferNames() bool { return output.orderBySubBufferNames }

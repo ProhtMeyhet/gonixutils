@@ -31,6 +31,8 @@ type OutputInterface interface {
 	SortKey() int
 	SetSortKey(to int)
 	SetSortTransformator(to func(string) string)
+	SortReversed() bool
+	ToggleSortReversed()
 
 	LinesManual() bool
 	ToggleLinesManual()

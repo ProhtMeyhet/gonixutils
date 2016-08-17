@@ -40,6 +40,10 @@ func NewSortedTabbedOutput(out, e io.Writer) OutputInterface {
 func (output *SortedOutput) NewSubBuffer(name string, key int) OutputInterface {
 	buffer := &SortedOutput{}
 	buffer.linesManual = output.linesManual
+	buffer.printSubBufferNames = output.printSubBufferNames
+	buffer.orderBySubBufferNames = output.orderBySubBufferNames
+	buffer.orderBySubBufferKeys = output.orderBySubBufferKeys
+	buffer.sortReversed = output.sortReversed
 	buffer.sortTransformator = output.sortTransformator
 
 	// TODO is this correct? or is there a better alternative?
@@ -116,7 +120,11 @@ func (output *SortedOutput) Done() {
 	}
 	output.innerMutex.Unlock()
 
-	sort.Strings(sorted)
+	if output.sortReversed {
+		sort.Sort(sort.Reverse(sort.StringSlice(sorted)))
+	} else {
+		sort.Strings(sorted)
+	}
 
 	for _, key := range sorted {
 		output.Output.Write(output.buffer[key].Format, output.buffer[key].Values...)
