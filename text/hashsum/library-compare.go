@@ -3,7 +3,6 @@ package hashsum
 import(
 	"bufio"
 	"bytes"
-"fmt"
 
 	"github.com/ProhtMeyhet/libgosimpleton/iotool"
 	"github.com/ProhtMeyhet/libgosimpleton/parallel"
