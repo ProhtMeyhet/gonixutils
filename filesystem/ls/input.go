@@ -35,6 +35,9 @@ type Input struct {
 	// no decoration whatsoever
 	NoDecoration	bool
 
+	// list all directories encountered recursivly
+	Recursive	bool
+
 	// sort all file system entries as if they are in one directory
 	Union		bool
 

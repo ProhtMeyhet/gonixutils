@@ -92,6 +92,8 @@ func (output *SortedOutput) WriteSorted(format, sortkey string, values ...interf
 }
 
 func (output *SortedOutput) Done() {
+	if output.done { return }
+
 	sorted := make([]string, len(output.buffer)); i := 0
 
 	// adding and removing while ranging is undefined behaviour (sic!)
@@ -110,7 +112,6 @@ func (output *SortedOutput) Done() {
 		i++
 	}
 
-	output.innerMutex.Lock()
 	for key, value := range add {
 		output.buffer[key] = value
 	}
@@ -118,7 +119,6 @@ func (output *SortedOutput) Done() {
 	for _, value := range remove {
 		delete(output.buffer, value)
 	}
-	output.innerMutex.Unlock()
 
 	if output.sortReversed {
 		sort.Sort(sort.Reverse(sort.StringSlice(sorted)))

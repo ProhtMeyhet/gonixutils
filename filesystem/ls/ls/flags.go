@@ -32,6 +32,7 @@ func (flags *LsFlags) Parse() {
 	optarg.Add("n", "new-line", "print each entry by line", false)
 	optarg.Add("s", "sort", "set sort true/false, since multithreading the order without sort is likely random", true)
 	optarg.Add("r", "reverse", "sort reverse", true)
+	optarg.Add("R", "recursive", "recursivly list all directorys encountered", true)
 	optarg.Add("u", "union", "treat all entries as if they are in the same directory", true)
 
 //	optarg.Header("Behaviour changing:")
@@ -52,6 +53,8 @@ func (flags *LsFlags) Parse() {
 			flags.Lines = option.Bool()
 		case "r":
 			flags.SortReversed = option.Bool()
+		case "R":
+			flags.Recursive = option.Bool()
 		case "s":
 			flags.NoSort = option.Bool()
 		case "u":

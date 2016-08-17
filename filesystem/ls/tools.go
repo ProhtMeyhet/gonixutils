@@ -1,6 +1,7 @@
 package ls
 
 import(
+	"os"
 	"path"
 )
 
@@ -18,4 +19,13 @@ func IsHidden(name string) bool {
 	if len(name) == 0 { return false }
 	if name[0:1] == "." { return true }
 	return false
+}
+
+// add path separator if path doesn't end with one
+func AddPathSeparator(to string) string {
+	if len(to) > 0 {
+		if to[:len(to)-1] != string(os.PathSeparator) {
+			to += string(os.PathSeparator)
+		}
+	}; return to
 }

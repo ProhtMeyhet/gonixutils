@@ -8,7 +8,6 @@ import(
 //	"sort"
 	"sync"
 	"text/tabwriter"
-	"os"
 )
 
 /*
@@ -56,6 +55,13 @@ type Output struct {
 
 	sortReversed		bool
 
+	onceDo			sync.Once
+	onceWait		sync.Once
+
+	// called once in done
+	done			bool
+	waited			bool
+
 	// public Lock() for public, inner mutex to guard assignment to maps
 	innerMutex		sync.Mutex
 }
@@ -80,6 +86,7 @@ func NewTabbedOutput(out, e io.Writer) OutputInterface {
 // return a new subbuffer that is automatically flushed to the main buffer when done
 // name can be printed, key can be used for keeping a sort order in output
 func (output *Output) NewSubBuffer(name string, key int) OutputInterface {
+   println("newSubBuffer " + name)
 	buffer := &Output{}
 	buffer.linesManual = output.linesManual
 	buffer.printSubBufferNames = output.printSubBufferNames
@@ -185,8 +192,11 @@ func (output *Output) WriteError(format string, values ...interface{}) {
 }
 
 func (output *Output) Done() {
-	close(output.out)
-	close(output.eout)
+	output.onceDo.Do(func() {
+		close(output.out)
+		close(output.eout)
+		output.done = true
+	})
 }
 
 func (output *Output) tabWrite(toWrite string) {
@@ -198,9 +208,13 @@ func (output *Output) tabWrite(toWrite string) {
 }
 
 func (output *Output) Wait() {
-	output.waitGroup.Wait()
-
+	// lock is here for synchronisation
 	output.Lock()
+	output.onceWait.Do(func() {
+		output.waitGroup.Wait()
+	})
+
+	if output.waited { output.Unlock(); return }
 
 	// must be done here to ensure no one writes any more
 	if output.tabwriter != nil {
@@ -247,20 +261,36 @@ func (output *Output) Wait() {
 	} else { */
 		for i := 0; i < len(output.subBuffers); i++ {
 			sub := output.subBuffers[i]
+			sub.Lock()
 			if output.printSubBufferNames { fmt.Fprint(output.outwrite, output.subBufferNames[i]) }
-			sub.Done(); sub.Wait()
+			sub.Unlock(); sub.Done(); sub.Wait(); sub.Lock()
 			sub.writeTo(output.outwrite)
 			if output.printSubBufferNames && i+1 != len(output.subBuffers){ fmt.Fprintln(output.outwrite) }
+			sub.Unlock()
 		}
 //	}
 
+	output.waited = true
 	output.Unlock()
 }
 
 func (output *Output) writeTo(to io.Writer) {
 	if writeTo, ok := output.outwrite.(io.WriterTo); ok {
-		writeTo.WriteTo(os.Stdout)
+		writeTo.WriteTo(to)
 	}
+}
+
+func (output *Output) Reset() {
+	output.innerMutex.Lock()
+	output.onceDo = sync.Once{}
+	output.onceWait = sync.Once{}
+	output.subBuffers = make([]OutputInterface, 0)
+	output.subBufferNames = make([]string, 0)
+	output.subBufferKeys = make([]int, 0)
+	output.tabBuffer = make([]string, 0)
+	output.done = false
+	output.waited = false
+	output.innerMutex.Unlock()
 }
 
 func (output *Output) SortReversed() bool { return output.sortReversed }

@@ -3,6 +3,7 @@ package ls
 import(
 	"os"
 	"os/user"
+	pathTools "path"
 	"strconv"
 	"strings"
 	"syscall"
@@ -14,9 +15,9 @@ import(
 	"github.com/ProhtMeyhet/gonixutils/library/abstract"
 )
 
-func list(input *Input, mainOutput abstract.OutputInterface) (exitCode uint8) {
-	work := parallel.NewStringFeeder(input.Paths); initialise(input, mainOutput); directoryCount := 0
-
+func list(input *Input, paths []string, mainOutput abstract.OutputInterface) (exitCode uint8) {
+	mainOutput.Lock()
+	work := parallel.NewStringFeeder(paths); initialise(input, mainOutput); directoryCount := 0
 	work.Start(func() {
 		iwork := parallel.NewWork(work.Workers())
 		entries := make(chan *Entry, iwork.SuggestBufferSize(0)); entry := &Entry{ output: mainOutput }
@@ -29,18 +30,24 @@ func list(input *Input, mainOutput abstract.OutputInterface) (exitCode uint8) {
 				if entry.info.IsDir() {
 					if !input.Union {
 						entry.output = mainOutput.NewSubBuffer(path + ":\n", 0)
-						work.Lock()
-						directoryCount++; if directoryCount == 2 {
-							mainOutput.TogglePrintSubBufferNames()
-							mainOutput.ToggleOrderBySubBufferNames()
+						if directoryCount < 2 && !mainOutput.PrintSubBufferNames() {
+							work.Lock()
+							directoryCount++; if directoryCount == 2 {
+								if !mainOutput.PrintSubBufferNames() {
+									mainOutput.TogglePrintSubBufferNames()
+								}
+								if !mainOutput.OrderBySubBufferNames() {
+									mainOutput.ToggleOrderBySubBufferNames()
+								}
+							}
+							work.Unlock()
 						}
-						work.Unlock()
 					}
 					if input.All { writeDotDot(input, entry) }
 					list, e := iotool.ListDirectory(path); if entry.output.WriteE(e) { continue }
 					for _, ipath := range list {
 						entry = &Entry{ output: entry.output }
-						entry.path = path + string(os.PathSeparator) + ipath; entry.base = ipath
+						entry.path = pathTools.Join(path, ipath); entry.base = ipath
 						entries <-entry
 					}
 				} else {
@@ -59,20 +66,27 @@ func list(input *Input, mainOutput abstract.OutputInterface) (exitCode uint8) {
 				if !ShouldPrint(input, entry.base) { continue }
 				if entry.info == nil { entry.info, e = os.Lstat(entry.path); if entry.output.WriteE(e) { continue } }
 				input.writeEntry(input, entry)
+				// TODO stay in this goroutine or go list() ?
+				if input.Recursive && entry.info.IsDir() {
+					subOutput := mainOutput.NewSubBuffer("", 0)
+					subOutput.TogglePrintSubBufferNames()
+					subOutput.ToggleOrderBySubBufferNames()
+					list(input, []string{ entry.path }, subOutput)
+				}
 			}
 		})
 
 		iwork.Wait() // required if not using tabwriter ?: ; if !input.Lines { output.Append("%v", "\n") }
 	})
 
-	work.Wait(); mainOutput.Done(); mainOutput.Wait(); return
+	work.Wait(); mainOutput.Unlock(); mainOutput.Done(); mainOutput.Wait(); return
 }
 
-func initialise(input *Input, output abstract.OutputInterface) {
+func initialise(input *Input, mainOutput abstract.OutputInterface) {
 	if input.NoColor { input.decorate = PlainDecorator } else { input.decorate = ColorDecorator }
 
 	if input.Detail {
-		output.ToggleLinesManual()
+		mainOutput.ToggleLinesManual()
 		input.writeEntry = WriteEntryLong
 	} else {
 		input.writeEntry = WriteEntryShort
@@ -81,7 +95,7 @@ func initialise(input *Input, output abstract.OutputInterface) {
 	if !input.NoSort {
 		// before sorting remove . from files
 		// also have to remove color junk in front to enable sorting...
-		output.SetSortTransformator(func(name string) string {
+		mainOutput.SetSortTransformator(func(name string) string {
 			if len(name) == 0 ||
 				(len(name) == 1 && name[0:1] == ".") ||
 				(len(name) == 2 && name[0:2] == "..") { return name }
@@ -91,6 +105,11 @@ func initialise(input *Input, output abstract.OutputInterface) {
 			if name[0:1] == "." { return name[1:] }
 			return name
 		})
+	}
+
+	if input.Recursive {
+		mainOutput.TogglePrintSubBufferNames()
+		mainOutput.ToggleOrderBySubBufferNames()
 	}
 }
 
