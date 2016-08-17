@@ -86,7 +86,6 @@ func NewTabbedOutput(out, e io.Writer) OutputInterface {
 // return a new subbuffer that is automatically flushed to the main buffer when done
 // name can be printed, key can be used for keeping a sort order in output
 func (output *Output) NewSubBuffer(name string, key int) OutputInterface {
-   println("newSubBuffer " + name)
 	buffer := &Output{}
 	buffer.linesManual = output.linesManual
 	buffer.printSubBufferNames = output.printSubBufferNames
