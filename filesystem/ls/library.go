@@ -16,7 +16,6 @@ import(
 )
 
 func list(input *Input, paths []string, mainOutput abstract.OutputInterface) (exitCode uint8) {
-	mainOutput.Lock()
 	work := parallel.NewStringFeeder(paths); initialise(input, mainOutput); directoryCount := 0
 	work.Start(func() {
 		iwork := parallel.NewWork(work.Workers())
@@ -79,7 +78,7 @@ func list(input *Input, paths []string, mainOutput abstract.OutputInterface) (ex
 		iwork.Wait() // required if not using tabwriter ?: ; if !input.Lines { output.Append("%v", "\n") }
 	})
 
-	work.Wait(); mainOutput.Unlock(); mainOutput.Done(); mainOutput.Wait(); return
+	work.Wait(); return
 }
 
 func initialise(input *Input, mainOutput abstract.OutputInterface) {

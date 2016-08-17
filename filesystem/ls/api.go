@@ -16,5 +16,9 @@ func Ls(input *Input) (exitCode uint8) {
 
 	if input.SortReversed { output.ToggleSortReversed() }
 
-	return list(input, input.Paths, output)
+	exitCode = list(input, input.Paths, output)
+
+	output.Done(); output.Wait()
+
+	return
 }

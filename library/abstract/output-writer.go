@@ -280,7 +280,7 @@ func (output *Output) writeTo(to io.Writer) {
 }
 
 func (output *Output) Reset() {
-	output.innerMutex.Lock()
+	output.innerMutex.Lock(); output.Lock()
 	output.onceDo = sync.Once{}
 	output.onceWait = sync.Once{}
 	output.subBuffers = make([]OutputInterface, 0)
@@ -289,7 +289,7 @@ func (output *Output) Reset() {
 	output.tabBuffer = make([]string, 0)
 	output.done = false
 	output.waited = false
-	output.innerMutex.Unlock()
+	output.Unlock(); output.innerMutex.Unlock()
 }
 
 func (output *Output) SortReversed() bool { return output.sortReversed }
