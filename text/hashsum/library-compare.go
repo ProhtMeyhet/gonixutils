@@ -66,6 +66,7 @@ func compare1(input *Input, output abstract.OutputInterface, list chan string) (
 							break
 						}
 					} else {
+	fmt.Println("parsed %v, %v\n", hashPath.Hash, hashPath.Path)
 						talk <-hashPath
 					}
 				}
@@ -80,6 +81,7 @@ func compare1(input *Input, output abstract.OutputInterface, list chan string) (
 
 		iwork.Feed(func() {
 			for hashPath := range talk {
+	fmt.Println("got %v, %v\n", hashPath.Hash, hashPath.Path)
 				hash1List <-string(hashPath.Path)
 				hashPaths[string(hashPath.Path)] = hashPath
 				hashlen = len(hashPath.Hash)
