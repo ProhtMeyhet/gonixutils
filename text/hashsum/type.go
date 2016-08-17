@@ -1,3 +1,3 @@
-package hash
+package hashsum
 
 type Type uint8

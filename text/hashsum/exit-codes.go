@@ -1,4 +1,4 @@
-package hash
+package hashsum
 
 const(
 	ERROR_HASH_FUNCTION		= 20

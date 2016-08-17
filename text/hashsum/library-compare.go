@@ -1,8 +1,9 @@
-package hash
+package hashsum
 
 import(
 	"bufio"
 	"bytes"
+"fmt"
 
 	"github.com/ProhtMeyhet/libgosimpleton/iotool"
 	"github.com/ProhtMeyhet/libgosimpleton/parallel"
@@ -40,13 +41,13 @@ func compare(input *Input, output abstract.OutputInterface, work *parallel.WorkS
 func compare1(input *Input, output abstract.OutputInterface, list chan string) (exitCode uint8) {
 	notFound, unequalHashes, wrongHashFunction, hashlen, expectedHashLen := 0, 0, uint(0), 0, HashLen(input.Type)
 	reader, helper := &bufio.Reader{}, prepareFileHelper(input, output, &exitCode)
-	work := parallel.NewWork(0); talk := make(chan *HashPath, work.SuggestBufferSize(0))
+	work := parallel.NewWork(0); talk := make(chan HashPath, work.SuggestBufferSize(0))
 
 	work.Feed(func() {
 		for path := range list {
 			handler, e := iotool.Open(helper, path); if e != nil { continue }
 			reader.Reset(handler); scanner := bufio.NewScanner(reader)
-			scanner.Split(bufio.ScanWords); hashPath := &HashPath{}
+			scanner.Split(bufio.ScanWords); hashPath := HashPath{}
 
 			for i := 1; scanner.Scan(); i++ {
 				if i % 2 != 0 {
@@ -66,7 +67,6 @@ func compare1(input *Input, output abstract.OutputInterface, list chan string) (
 						}
 					} else {
 						talk <-hashPath
-						hashPath = &HashPath{}
 					}
 				}
 			}
@@ -76,7 +76,7 @@ func compare1(input *Input, output abstract.OutputInterface, list chan string) (
 	work.Start(func() {
 		hash1List := make(chan string, work.SuggestBufferSize(0))
 		in := bytes.NewBuffer(make([]byte, 0)); buffered := abstract.NewOutput(in, input.Stderr)
-		iwork := parallel.NewWork(work.Workers()); hashPaths :=make(map[string]*HashPath)
+		iwork := parallel.NewWork(work.Workers()); hashPaths := make(map[string]HashPath)
 
 		iwork.Feed(func() {
 			for hashPath := range talk {
@@ -87,7 +87,7 @@ func compare1(input *Input, output abstract.OutputInterface, list chan string) (
 		})
 
 		iwork.Start(func() {
-			hash1(input, buffered, Factory(input), hash1List)
+			Do(input, buffered, Factory(input), hash1List)
 		})
 
 		// since the output is unordered, wait until everything is finished before comparing

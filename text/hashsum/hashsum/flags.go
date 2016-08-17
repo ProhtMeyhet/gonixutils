@@ -14,7 +14,7 @@ import(
 
 type HashFlags struct {
 	abstract.Flags
-	hash.Input
+	hashsum.Input
 
 	unparsedType string
 }
@@ -23,7 +23,7 @@ func NewHashFlags() *HashFlags {
 	return &HashFlags{}
 }
 
-func (flags *HashFlags) GetInput() *hash.Input {
+func (flags *HashFlags) GetInput() *hashsum.Input {
 	return &flags.Input
 }
 
@@ -72,7 +72,7 @@ func (flags *HashFlags) Parse() {
 		}
 	}
 
-	flags.Type = hash.ParseType(flags.unparsedType)
+	flags.Type = hashsum.ParseType(flags.unparsedType)
 
 	if flags.Idiot == 0 {
 		flags.Idiot = 10
@@ -82,7 +82,7 @@ func (flags *HashFlags) Parse() {
 func (flags *HashFlags) Validate() {
 	flags.Flags.Validate()
 
-	if len(flags.PathList) > 0 && flags.Type == hash.NONE {
+	if len(flags.PathList) > 0 && flags.Type == hashsum.NONE {
 		fmt.Fprintf(os.Stderr, "%v is not a valid hashtype!\nexample usage: %v sha1 ...FILE\n", flags.unparsedType, os.Args[0])
 		os.Exit(abstract.ERROR_INVALID_ARGUMENT)
 	}

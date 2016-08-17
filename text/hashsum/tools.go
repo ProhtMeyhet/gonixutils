@@ -1,4 +1,4 @@
-package hash
+package hashsum
 
 // parse me!
 func ParseType(input string) Type {

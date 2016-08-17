@@ -1,61 +1,35 @@
-package hash
+package hashsum
 
 import(
 	"encoding/hex"
 	"hash"
 
-//	"github.com/ProhtMeyhet/libgosimpleton/iotool"
+	"github.com/ProhtMeyhet/libgosimpleton/simpleton"
 	"github.com/ProhtMeyhet/libgosimpleton/parallel"
 
 	"github.com/ProhtMeyhet/gonixutils/library/abstract"
 )
 
-// use a hasher to hash a file or stdin
 func doHash(input *Input, factory func() hash.Hash) (exitCode uint8) {
-	work := parallel.NewStringFeeder(input.PathList)
 	output := abstract.NewOutput(input.Stdout, input.Stderr)
-
-	if input.VerboseLevel == 1 {
-		output.WriteError("using %v workers for %v input(s).\n", work.Workers(), len(input.PathList))
-	}
-
-	work.Start(func() {
-		exitCode = hash1(input, output, factory, work.Talk)
-	})
-
-	work.Wait()
-
-	if input.VerboseLevel >= 2 {
-		output.WriteError("used %v workers for %v input(s).\n", work.Workers(), len(input.PathList))
-	}
-
-	output.Done(); output.Wait()
-
-	return
+	exitCode = DoFromList(input, output, factory, input.PathList...)
+	output.Done(); output.Wait(); return
 }
 
-// hash one file, get it's path via list. when finished, reset and restart until list is closed.
-func hash1(input *Input, output abstract.OutputInterface, factory func() hash.Hash, list chan string) (exitCode uint8) {
-	work := parallel.NewWork(1); hasher := factory()
-	buffers := make(chan NamedBuffer, work.SuggestFileBufferSize())
+func Do(input *Input, output abstract.OutputInterface, factory func() hash.Hash, paths <-chan string) (exitCode uint8) {
+	helper := prepareFileHelper(input, output, &exitCode)
 
-	// open and read in one thread
-	work.Feed(func() {
-		defer close(buffers); helper := prepareFileHelper(input, output, &exitCode)
-		ReadFiles(helper, buffers, list)
-	})
-
-	// hashing in another thread
-	work.Run(func() {
+	parallel.OpenFilesDoWork(helper, paths, func(buffers chan parallel.NamedBuffer) {
+		hasher := factory()
 		for buffered := range buffers {
-			if buffered.done {
-				output.Write("%v  %v\n", hex.EncodeToString(hasher.Sum(nil)), buffered.name)
+			if buffered.Done() {
+				output.Write("%v  %v\n", hex.EncodeToString(hasher.Sum(nil)), buffered.Name())
 				hasher.Reset()
 				continue
 			}
 
-			written, e := hasher.Write(buffered.buffer[:buffered.read])
-			if written != buffered.read {
+			written, e := hasher.Write(buffered.Bytes())
+			if written != buffered.Read() {
 				output.WriteError("short write on hasher! output probably wrong!")
 				exitCode = ERROR_HASH_FUNCTION
 			}
@@ -67,4 +41,8 @@ func hash1(input *Input, output abstract.OutputInterface, factory func() hash.Ha
 	})
 
 	return
+}
+
+func DoFromList(input *Input, output abstract.OutputInterface, factory func() hash.Hash, paths ...string) (exitCode uint8) {
+	return Do(input, output, factory, simpleton.StringListToChannel(paths...))
 }

@@ -1,4 +1,4 @@
-package hash
+package hashsum
 
 const(
 	NONE	Type	= 0
