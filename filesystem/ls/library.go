@@ -168,7 +168,7 @@ func WriteEntryShort(input *Input, entry *Entry) {
 
 func writeDotDot(input *Input, entry *Entry) {
 	// TODO linux: if os.Lstat("/..") just returns /. so no error. BSD? 
-	infoDotDot, _ := os.Lstat(entry.path + string(os.PathSeparator) + "..")
+	infoDotDot, _ := os.Lstat(pathTools.Join(entry.path, ".."))
 	input.writeEntry(input, &Entry{ path: ".", base: ".",
 					info: entry.info, output: entry.output })
 	input.writeEntry(input, &Entry{ path: "..", base: "..",
