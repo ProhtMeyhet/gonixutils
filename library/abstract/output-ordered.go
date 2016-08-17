@@ -37,20 +37,28 @@ func NewSortedTabbedOutput(out, e io.Writer) OutputInterface {
 }
 
 // TODO add a copy function
-// return a new subbuffer that is automatically flushed to the main buffer when done
-func (output *SortedOutput) NewSubBuffer() OutputInterface {
+func (output *SortedOutput) NewSubBuffer(name string, key int) OutputInterface {
 	buffer := &SortedOutput{}
-	bufferbyte := make([]byte, 0) // TODO is this correct? or is there a better alternative?
-	bytesBuffer := bytes.NewBuffer(bufferbyte)
+	buffer.linesManual = output.linesManual
+	buffer.sortTransformator = output.sortTransformator
+
+	// TODO is this correct? or is there a better alternative?
+	bufferbyte := make([]byte, 0);	bytesBuffer := bytes.NewBuffer(bufferbyte)
+
 	if output.tabwriter != nil {
 		buffer.tabwriter = tabwriter.NewWriter(bytesBuffer, 32, 0, 0, ' ', 0)
 		buffer.terminalInfo = new(TerminalInfo)
 		buffer.delimiter = "\t"
 	}
+
 	buffer.Initialise(bytesBuffer, output.ewrite)
+
+	output.innerMutex.Lock()
 	output.subBuffers = append(output.subBuffers, buffer)
-	buffer.linesManual = output.linesManual
-	buffer.sortTransformator = output.sortTransformator
+	output.subBufferNames = append(output.subBufferNames, name)
+	output.subBufferKeys = append(output.subBufferKeys, key)
+	output.innerMutex.Unlock()
+
 	return buffer
 }
 

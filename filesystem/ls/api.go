@@ -2,20 +2,17 @@ package ls
 
 import(
 
-
-	"github.com/ProhtMeyhet/libgosimpleton/parallel"
-
 	"github.com/ProhtMeyhet/gonixutils/library/abstract"
 )
 
+// list filesystem entries
 func Ls(input *Input) (exitCode uint8) {
-	work := parallel.NewStringFeeder(input.Paths)
 	output := abstract.NewSortedTabbedOutput(input.Stdout, input.Stderr)
 	if input.Lines {
 		output = abstract.NewOutput(input.Stdout, input.Stderr)
-	} else if input.NoSort {
+	} else if input.NoSort && !input.Detail {
 		output = abstract.NewTabbedOutput(input.Stdout, input.Stderr)
 	}
 
-	return list(input, output, work)
+	return list(input, output)
 }

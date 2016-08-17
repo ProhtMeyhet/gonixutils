@@ -35,7 +35,13 @@ type OutputInterface interface {
 	LinesManual() bool
 	ToggleLinesManual()
 
-	NewSubBuffer() OutputInterface
+	NewSubBuffer(name string, key int) OutputInterface
+	PrintSubBufferNames() bool
+	TogglePrintSubBufferNames()
+	OrderBySubBufferNames() bool
+	ToggleOrderBySubBufferNames()
+	OrderBySubBufferKeys() bool
+	ToggleOrderBySubBufferKeys()
 
 	// internal
 	writeTo(io.Writer)

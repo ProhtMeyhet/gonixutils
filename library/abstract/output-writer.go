@@ -5,6 +5,7 @@ import(
 	"fmt"
 	"io"
 	"strings"
+//	"sort"
 	"sync"
 	"text/tabwriter"
 	"os"
@@ -37,7 +38,7 @@ type Output struct {
 	waitGroup	sync.WaitGroup
 
 	// currently flushing
-	flushing	bool
+	flushing		bool
 
 	newLinePrintedOnce	bool
 	delimiter		string
@@ -45,10 +46,16 @@ type Output struct {
 	// do not add line breaks
 	linesManual		bool
 
-	subBuffers	[]OutputInterface
+	// subBuffer stuff
+	subBuffers		[]OutputInterface
+	subBufferNames		[]string
+	subBufferKeys		[]int
+	printSubBufferNames	bool
+	orderBySubBufferNames	bool
+	orderBySubBufferKeys	bool
 
 	// public Lock() for public, inner mutex to guard assignment to maps
-	innerMutex	sync.Mutex
+	innerMutex		sync.Mutex
 }
 
 func NewOutput(out, e io.Writer) (output OutputInterface) {
@@ -69,18 +76,28 @@ func NewTabbedOutput(out, e io.Writer) OutputInterface {
 
 // TODO add a copy function
 // return a new subbuffer that is automatically flushed to the main buffer when done
-func (output *Output) NewSubBuffer() OutputInterface {
+// name can be printed, key can be used for keeping a sort order in output
+func (output *Output) NewSubBuffer(name string, key int) OutputInterface {
 	buffer := &Output{}
-	bufferbyte := make([]byte, 0) // TODO is this correct? or is there a better alternative?
-	bytesBuffer := bytes.NewBuffer(bufferbyte)
+	buffer.linesManual = output.linesManual
+
+	// TODO is this correct? or is there a better alternative?
+	bufferbyte := make([]byte, 0); bytesBuffer := bytes.NewBuffer(bufferbyte)
+
 	if output.tabwriter != nil {
 		buffer.tabwriter = tabwriter.NewWriter(bytesBuffer, 32, 0, 0, ' ', 0)
 		buffer.terminalInfo = new(TerminalInfo)
 		buffer.delimiter = "\t"
 	}
+
 	buffer.Initialise(bytesBuffer, output.ewrite)
+
+	output.innerMutex.Lock()
 	output.subBuffers = append(output.subBuffers, buffer)
-	buffer.linesManual = output.linesManual
+	output.subBufferNames = append(output.subBufferNames, name)
+	output.subBufferKeys = append(output.subBufferKeys, key)
+	output.innerMutex.Unlock()
+
 	return buffer
 }
 
@@ -177,6 +194,8 @@ func (output *Output) tabWrite(toWrite string) {
 func (output *Output) Wait() {
 	output.waitGroup.Wait()
 
+	output.Lock()
+
 	// must be done here to ensure no one writes any more
 	if output.tabwriter != nil {
 		output.flushing = true
@@ -196,11 +215,40 @@ func (output *Output) Wait() {
 		if !output.newLinePrintedOnce && output.writeCount > 0 { fmt.Fprintf(output.tabwriter, "\n") }
 		output.tabwriter.Flush()
 	}
+/* TODO 
+	if output.orderBySubBufferNames {
+	    for key, name := range output.subBufferNames { fmt.Printf("%v %v\n", key, name) }
+		sort.Strings(output.subBufferNames); i := 0
+	    for key, name := range output.subBufferNames { fmt.Printf("%v %v\n", key, name) }
+		for key, name := range output.subBufferNames {
+			sub := output.subBuffers[key]
+			if output.printSubBufferNames { fmt.Fprint(output.outwrite, name) }
+			sub.Done(); sub.Wait()
+			sub.writeTo(output.outwrite)
+			if output.printSubBufferNames && i+1 != len(output.subBuffers){ fmt.Fprintln(output.outwrite) }
+			i++
+		}
+	} else if output.orderBySubBufferKeys {
+		sort.Ints(output.subBufferKeys); i := 0
+		for key, _ := range output.subBufferKeys {
+			sub := output.subBuffers[key]
+			if output.printSubBufferNames { fmt.Fprint(output.outwrite, output.subBufferNames[key]) }
+			sub.Done(); sub.Wait()
+			sub.writeTo(output.outwrite)
+			if output.printSubBufferNames && i+1 != len(output.subBuffers){ fmt.Fprintln(output.outwrite) }
+			i++
+		}
+	} else { */
+		for i := 0; i < len(output.subBuffers); i++ {
+			sub := output.subBuffers[i]
+			if output.printSubBufferNames { fmt.Fprint(output.outwrite, output.subBufferNames[i]) }
+			sub.Done(); sub.Wait()
+			sub.writeTo(output.outwrite)
+			if output.printSubBufferNames && i+1 != len(output.subBuffers){ fmt.Fprintln(output.outwrite) }
+		}
+//	}
 
-	for _, sub := range output.subBuffers {
-		sub.Done(); sub.Wait()
-		sub.writeTo(output.outwrite)
-	}
+	output.Unlock()
 }
 
 func (output *Output) writeTo(to io.Writer) {
@@ -208,6 +256,13 @@ func (output *Output) writeTo(to io.Writer) {
 		writeTo.WriteTo(os.Stdout)
 	}
 }
+
+func (output *Output) PrintSubBufferNames() bool { return output.printSubBufferNames }
+func (output *Output) TogglePrintSubBufferNames() { output.printSubBufferNames = !output.printSubBufferNames }
+func (output *Output) OrderBySubBufferNames() bool { return output.orderBySubBufferNames }
+func (output *Output) ToggleOrderBySubBufferNames() { output.orderBySubBufferNames = !output.orderBySubBufferNames }
+func (output *Output) OrderBySubBufferKeys() bool { return output.orderBySubBufferKeys }
+func (output *Output) ToggleOrderBySubBufferKeys() { output.orderBySubBufferKeys = !output.orderBySubBufferKeys }
 
 // output is a reduced version of sorted output
 func (output *Output) SortKey() int { return -1 }

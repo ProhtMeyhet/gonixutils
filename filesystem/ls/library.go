@@ -13,10 +13,9 @@ import(
 
 	"github.com/ProhtMeyhet/gonixutils/library/abstract"
 )
-// TODO
-// split output of two or more directories. currently they are printed as if they were one
-func list(input *Input, mainOutput abstract.OutputInterface, work *parallel.WorkString) (exitCode uint8) {
-	initialise(input, mainOutput)
+
+func list(input *Input, mainOutput abstract.OutputInterface) (exitCode uint8) {
+	work := parallel.NewStringFeeder(input.Paths); initialise(input, mainOutput); directoryCount := 0
 
 	work.Start(func() {
 		iwork := parallel.NewWork(work.Workers())
@@ -25,17 +24,20 @@ func list(input *Input, mainOutput abstract.OutputInterface, work *parallel.Work
 		iwork.Feed(func() {
 			var e error
 			for path := range work.Talk {
+				if path == "" { mainOutput.WriteError("Path is empty!") }
 				entry.info, e = os.Lstat(path); if mainOutput.WriteE(e) { continue }
 				if entry.info.IsDir() {
-					if !input.Union { entry.output = mainOutput.NewSubBuffer() }
-					if input.All {
-						// TODO can an error happen? maybe if path is / ?
-						infoDotDot, _ := os.Lstat(path + string(os.PathSeparator) + "..")
-						input.writeEntry(input, &Entry{ path: ".", base: ".", info: entry.info, output: entry.output })
-						input.writeEntry(input, &Entry{ path: "..", base: "..", info: infoDotDot, output: entry.output })
+					if !input.Union {
+						entry.output = mainOutput.NewSubBuffer(path + ":\n", 0)
+						work.Lock()
+						directoryCount++; if directoryCount == 2 {
+							mainOutput.TogglePrintSubBufferNames()
+							mainOutput.ToggleOrderBySubBufferNames()
+						}
+						work.Unlock()
 					}
-					list, e := iotool.ListDirectory(path)
-					if e != nil { entry.output.WriteE(e); entries <-entry }
+					if input.All { writeDotDot(input, entry) }
+					list, e := iotool.ListDirectory(path); if entry.output.WriteE(e) { continue }
 					for _, ipath := range list {
 						entry = &Entry{ output: entry.output }
 						entry.path = path + string(os.PathSeparator) + ipath; entry.base = ipath
@@ -143,6 +145,15 @@ func WriteEntryShort(input *Input, entry *Entry) {
 		decorated := input.decorate(entry.base, nil)
 		entry.output.Write(format, decorated)
 	}
+}
+
+func writeDotDot(input *Input, entry *Entry) {
+	// TODO linux: if os.Lstat("/..") just returns /. so no error. BSD? 
+	infoDotDot, _ := os.Lstat(entry.path + string(os.PathSeparator) + "..")
+	input.writeEntry(input, &Entry{ path: ".", base: ".",
+					info: entry.info, output: entry.output })
+	input.writeEntry(input, &Entry{ path: "..", base: "..",
+					info: infoDotDot, output: entry.output })
 }
 
 // pass Entries around

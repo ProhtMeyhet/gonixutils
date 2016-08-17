@@ -26,12 +26,12 @@ func (flags *LsFlags) GetInput() *ls.Input {
 
 func (flags *LsFlags) Parse() {
 	optarg.Header("Options for " + os.Args[0])
+	optarg.Add("a", "all", "print everything, including . and ..", false)
 	optarg.Add("c", "color", "set color true/false", true)
-	optarg.Add("s", "sort", "set sort true/false", true)
-	optarg.Add("u", "union", "treat all entries as if they are in the same directory", true)
 	optarg.Add("l", "list", "print files by line with details", false)
 	optarg.Add("n", "new-line", "print each entry by line", false)
-	optarg.Add("a", "all", "print everything, including . and ..", false)
+	optarg.Add("s", "sort", "set sort true/false, since multithreading the order without sort is likely random.", true)
+	optarg.Add("u", "union", "treat all entries as if they are in the same directory", true)
 
 //	optarg.Header("Behaviour changing:")
 //	optarg.Add("r", "recursive", "create directorys recursive (works with files too)", false)
