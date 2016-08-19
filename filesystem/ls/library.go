@@ -15,6 +15,11 @@ import(
 	"github.com/ProhtMeyhet/gonixutils/library/abstract"
 )
 
+//  I got tired of people complaining that it was too hard to use UNIX because the editor was too complicated.
+//
+//   - Bill Joy
+
+// list filesystem entries given by path into output
 func List(input *Input, paths []string, mainOutput abstract.OutputInterface) (exitCode uint8) {
 	work := parallel.NewStringFeeder(paths); initialise(input, mainOutput); directoryCount := 0
 	work.Start(func() {

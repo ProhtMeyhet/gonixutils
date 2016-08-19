@@ -16,6 +16,10 @@ import(
  *  output.Done; output.Wait()
 */
 
+// UNIX was not designed to stop you from doing stupid things, because that would also stop you from doing clever things.
+//
+//   — Doug Gwyn
+
 // write in a separate goroutine to output writers (stdout, stderr)
 type Output struct {
 	sync.Mutex

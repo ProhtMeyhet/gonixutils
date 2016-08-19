@@ -11,6 +11,11 @@ import(
 	"github.com/ProhtMeyhet/gonixutils/library/abstract"
 )
 
+
+// Those who do not understand UNIX are condemned to reinvent it, poorly.
+//
+//   — Henry Spencer
+
 func doHash(input *Input, factory func() hash.Hash) (exitCode uint8) {
 	output := abstract.NewOutput(input.Stdout, input.Stderr)
 	exitCode = DoFromList(input, output, factory, input.PathList...)
