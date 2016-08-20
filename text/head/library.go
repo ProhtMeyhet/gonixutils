@@ -4,7 +4,7 @@ import(
 	"io"
 
 	"github.com/ProhtMeyhet/libgosimpleton/iotool"
-	ioreader "github.com/ProhtMeyhet/libgosimpleton/iotool/reader"
+	"github.com/ProhtMeyhet/libgosimpleton/iotool/ioreaders"
 	"github.com/ProhtMeyhet/libgosimpleton/parallel"
 
 	"github.com/ProhtMeyhet/gonixutils/library/abstract"
@@ -13,16 +13,16 @@ import(
 // unix head
 func Head(input *Input) (exitCode uint8) {
 	limit := func(reader io.Reader) io.Reader {
-		return ioreader.NewLimitLinesReader(reader, input.Max)
+		return ioreaders.NewLimitLinesReader(reader, input.Max)
 	}
 
 	if input.Bytes {
 		limit = func(reader io.Reader) io.Reader {
-			return ioreader.NewLimitBytesReader(reader, input.Max)
+			return ioreaders.NewLimitBytesReader(reader, input.Max)
 		}
 	} else if input.Runes {
 		limit = func(reader io.Reader) io.Reader {
-			return ioreader.NewLimitRunesReader(reader, input.Max)
+			return ioreaders.NewLimitRunesReader(reader, input.Max)
 		}
 	}
 
