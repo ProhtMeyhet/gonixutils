@@ -86,7 +86,7 @@ func compare1(input *Input, output abstract.OutputInterface, list chan string) (
 		})
 
 		iwork.Start(func() {
-			Do(input, buffered, Factory(input), hash1List)
+			Do(input, buffered, helper, Factory(input), hash1List)
 		})
 
 		// since the output is unordered, wait until everything is finished before comparing

@@ -67,14 +67,19 @@ func (flags *HeadFlags) Parse() {
 		if name == "" { continue }
 		flags.Paths = append(flags.Paths, name)
 	}
+
+	if len(flags.Paths) == 0 {
+		flags.Paths = append(flags.Paths, abstract.STDIN_TOKEN)
+	}
 }
 
 func (flags *HeadFlags) Validate() {
 	flags.Flags.Validate()
 
+/*
 	if len(flags.Paths) == 0 {
 		flags.Usage()
 		os.Exit(abstract.ERROR_NO_INPUT)
-	}
+	}*/
 }
 

@@ -72,6 +72,9 @@ func (flags *HashFlags) Parse() {
 		}
 	}
 
+	// read from stdin
+	if len(flags.PathList) == 0 { flags.PathList = append(flags.PathList, "-") }
+
 	flags.Type = hashsum.ParseType(flags.unparsedType)
 
 	if flags.Idiot == 0 {
@@ -87,9 +90,10 @@ func (flags *HashFlags) Validate() {
 		os.Exit(abstract.ERROR_INVALID_ARGUMENT)
 	}
 
+/*
 	if len(flags.PathList) == 0 {
 		flags.Usage()
 		os.Exit(abstract.ERROR_NO_INPUT)
-	}
+	}*/
 }
 

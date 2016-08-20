@@ -18,13 +18,12 @@ import(
 
 func doHash(input *Input, factory func() hash.Hash) (exitCode uint8) {
 	output := abstract.NewOutput(input.Stdout, input.Stderr)
-	exitCode = DoFromList(input, output, factory, input.PathList...)
+	helper := prepareFileHelper(input, output, &exitCode)
+	exitCode = DoFromList(input, output, helper, factory, input.PathList...)
 	output.Done(); output.Wait(); return
 }
 
-func Do(input *Input, output abstract.OutputInterface, factory func() hash.Hash, paths <-chan string) (exitCode uint8) {
-	helper := prepareFileHelper(input, output, &exitCode)
-
+func Do(input *Input, output abstract.OutputInterface, helper *iotool.FileHelper, factory func() hash.Hash, paths <-chan string) (exitCode uint8) {
 	parallel.OpenFilesDoWork(helper, paths, func(buffers chan *iotool.NamedBuffer) {
 		hasher := factory()
 		for buffered := range buffers {
@@ -49,6 +48,6 @@ func Do(input *Input, output abstract.OutputInterface, factory func() hash.Hash,
 	return
 }
 
-func DoFromList(input *Input, output abstract.OutputInterface, factory func() hash.Hash, paths ...string) (exitCode uint8) {
-	return Do(input, output, factory, simpleton.StringListToChannel(paths...))
+func DoFromList(input *Input, output abstract.OutputInterface, helper *iotool.FileHelper, factory func() hash.Hash, paths ...string) (exitCode uint8) {
+	return Do(input, output, helper, factory, simpleton.StringListToChannel(paths...))
 }
