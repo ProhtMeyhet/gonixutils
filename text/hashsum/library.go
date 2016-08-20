@@ -25,7 +25,7 @@ func doHash(input *Input, factory func() hash.Hash) (exitCode uint8) {
 func Do(input *Input, output abstract.OutputInterface, factory func() hash.Hash, paths <-chan string) (exitCode uint8) {
 	helper := prepareFileHelper(input, output, &exitCode)
 
-	parallel.OpenFilesDoWork(helper, paths, func(buffers chan iotool.NamedBuffer) {
+	parallel.OpenFilesDoWork(helper, paths, func(buffers chan *iotool.NamedBuffer) {
 		hasher := factory()
 		for buffered := range buffers {
 			if buffered.Done() {
