@@ -26,13 +26,13 @@ func (flags *HeadFlags) GetInput() *head.Input {
 
 func (flags *HeadFlags) Parse() {
 	optarg.Header("Options for " + os.Args[0])
-	optarg.Add("b", "bytes", "print the first NUM lines", false)
-	optarg.Add("n", "lines", "print the first NUM lines", 10)
-	optarg.Add("r", "runes", "print the first NUM runes. A rune is one utf8 character", false)
+	optarg.Add("b", "bytes", "print the first NUM bytes", uint(100))
+	// be compatible with unix head
+	optarg.Add("c", "bytes", "print the first NUM bytes", uint(100))
+	optarg.Add("n", "lines", "print the first NUM lines", uint(10))
+	optarg.Add("r", "runes", "print the first NUM runes. A rune is one utf8 character", uint(100))
 	optarg.Add("q", "quiet", "dont print headers giving file names", false)
 
-	// be compatible with unix head
-	optarg.Add("c", "bytes", "print the first NUM lines", false)
 
 	if abstract.SET_FILE_ADVICE_DONTNEED {
 		optarg.Add("x", "no-cache", "try not to leave caches behind (set file advice dont need)", false)
@@ -45,16 +45,16 @@ func (flags *HeadFlags) Parse() {
 		switch option.ShortName {
 		case "n":
 			flags.Max = option.Uint()
-		case "c":
-			flags.Bytes = option.Bool()
-		case "b":
-			flags.Bytes = option.Bool()
+		case "b", "c":
+			flags.Bytes = true
+			flags.Max = option.Uint()
 		case "q":
 			flags.Quiet = option.Bool()
 		case "r":
-			flags.Runes = option.Bool()
+			flags.Runes = true
+			flags.Max = option.Uint()
 		case "x":
-			flags.NoCache = option.Bool()
+			if abstract.SET_FILE_ADVICE_DONTNEED { flags.NoCache = option.Bool() }
 		}
 	}
 

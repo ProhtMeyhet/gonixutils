@@ -15,9 +15,10 @@ func Link(input *Input) (exitCode uint8) {
 	if len(input.PathList) == 0 { exitCode = abstract.ERROR_NO_INPUT; return }
 
 	target := input.PathList[0]
-	if len(input.PathList) == 1 {// variant 2
-		// use the file name of the target as link name
-		linkname := filepath.Base(input.PathList[0])
+
+	// variant 2 -> use the file name of the target as link name
+	if len(input.PathList) == 1 {
+		linkname := filepath.Base(target)
 
 		var e error
 		if input.Symbolic {
@@ -33,13 +34,19 @@ func Link(input *Input) (exitCode uint8) {
 		return
 	}
 
-	// variant 1
-	// user has supplied link name
-	input.PathList = input.PathList[1:]
+	// variant 1 -> user has supplied link name
+	input.PathList = input.PathList[1:]; var e error
 	for _, path := range input.PathList {
-		linkname := filepath.Base(path)
+		linkname := path
 
-		var e error
+		if input.Recursive {
+			directory := filepath.Dir(path)
+			// TODO mask
+			if e := os.MkdirAll(directory, 0766); abstract.PrintErrorWithError(e, input.Stderr, "") { continue }
+			// TODO make a relative path?
+			target, e = filepath.Abs(target); if abstract.PrintErrorWithError(e, input.Stderr, "") { continue }
+		}
+
 		if input.Symbolic {
 		    e = os.Symlink(target, linkname)
 		} else {

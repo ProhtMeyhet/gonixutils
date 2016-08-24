@@ -40,12 +40,15 @@ func Limit(input *Input, output abstract.OutputInterface, helper *iotool.FileHel
 	key := 0
 	parallel.ReadFilesFilteredSequential(helper, input.Paths, limit, func(buffers chan *iotool.NamedBuffer) {
 		i := 0
-		if !input.Quiet && len(input.Paths) > 1 && key == 0 { output.Write("==>%v<==\n", input.Paths[0]) }
 		for buffer := range buffers {
-			if !input.Quiet && len(input.Paths) > 1 && i == 0 && key > 0 {
-				output.Write("\n==>%v<==\n", input.Paths[key])
+			if !input.Quiet && len(input.Paths) > 1 && i == 0 {
+				if key == 0 {
+					output.Write("==>%v<==\n", input.Paths[0])
+				} else {
+					output.Write("\n==>%v<==\n", input.Paths[key])
+				}
 				key++
-			} else if key == 0 { key++ }
+			}
 
 			if buffer.Done() {
 				i = 0

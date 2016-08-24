@@ -39,6 +39,8 @@ func (flags *CatFlags) Parse() {
 		switch option.ShortName {
 		case "n":
 			flags.NumberLines = option.Bool()
+		case "x":
+			if abstract.SET_FILE_ADVICE_DONTNEED { flags.NoCache = option.Bool() }
 		}
 	}
 
