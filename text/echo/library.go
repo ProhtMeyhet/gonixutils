@@ -19,8 +19,8 @@ func Echo(input *Input) (exitCode uint8) {
 	output := input.Arguments
 
 	if input.Escapes {
-		output = make([]string, 1)
 		output[0] = string(ParseTerminalEscape([]byte(strings.Join(input.Arguments, " "))))
+		output = output[:1]
 	}
 
 	printer(output...); return
