@@ -26,12 +26,12 @@ func (flags *EchoFlags) GetInput() *echo.Input {
 
 func (flags *EchoFlags) Parse() {
 	optarg.Header("Options for " + os.Args[0])
-	optarg.Add("e", "escapes", "enable interpretation of backslash escapes", false)
+	optarg.Add("e", "escapes", "enable interpretation of backslash escapes", true)
 	optarg.Add("n", "no-newline", "do not output trailing newline", false)
 	optarg.Add("w", "to-stderr", "print to STDERR instead of STDOUT", false)
 
 	// be compatible with gnu echo
-	optarg.Add("E", "no-escapes", "disable interpretation of backslash escapes", true)
+	optarg.Add("E", "no-escapes", "disable interpretation of backslash escapes", false)
 
 	flags.AddGeneralOptions()
 
@@ -41,7 +41,7 @@ func (flags *EchoFlags) Parse() {
 		case "e":
 			flags.Escapes = option.Bool()
 		case "E":
-			flags.Escapes = option.Bool()
+			flags.Escapes = !option.Bool()
 		case "n":
 			flags.NoNewLine = option.Bool()
 		case "w":
