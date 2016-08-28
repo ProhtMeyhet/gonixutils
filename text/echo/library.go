@@ -2,7 +2,6 @@ package echo
 
 import(
 	"fmt"
-	"strings"
 )
 
 func Echo(input *Input) (exitCode uint8) {
@@ -16,11 +15,8 @@ func Echo(input *Input) (exitCode uint8) {
 		printer(); return
 	}
 
-	output := input.Arguments
-
-	if input.Escapes {
-		output[0] = string(ParseTerminalEscape([]byte(strings.Join(input.Arguments, " "))))
-		output = output[:1]
+	output := input.Arguments; if input.Escapes {
+		output = ParseTerminalEscape(input.Arguments...)
 	}
 
 	printer(output...); return

@@ -4,7 +4,18 @@ import(
 
 )
 
-func ParseTerminalEscape(input []byte) []byte {
+func ParseTerminalEscape(input ...string) (output []string) {
+	output = make([]string, len(input))
+	for key := range input {
+		output[key] = ParseTerminalEscape1(input[key])
+	}; return
+}
+
+func ParseTerminalEscape1(input string) string {
+	return string(ParseTerminalEscapeBytes([]byte(input)))
+}
+
+func ParseTerminalEscapeBytes(input []byte) []byte {
 	ii := 0
 scan:
 	for i := 0; i < len(input); {
