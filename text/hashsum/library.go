@@ -43,7 +43,7 @@ func Do(input *Input, output abstract.OutputInterface, helper *iotool.FileHelper
 				exitCode = ERROR_HASH_FUNCTION
 			}
 		}
-	})
+	}).Wait()
 
 	return
 }

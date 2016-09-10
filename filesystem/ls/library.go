@@ -1,12 +1,10 @@
 package ls
 
 import(
+	"fmt"
 	"os"
-	"os/user"
 	pathTools "path"
-	"strconv"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/ProhtMeyhet/libgosimpleton/iotool"
@@ -21,7 +19,7 @@ import(
 
 // list filesystem entries given by path into output
 func List(input *Input, paths []string, mainOutput abstract.OutputInterface) (exitCode uint8) {
-	work := parallel.NewStringFeeder(paths); initialise(input, mainOutput); directoryCount := 0
+	work := parallel.NewStringsFeeder(paths...); initialise(input, mainOutput); directoryCount := 0
 	work.Start(func() {
 		iwork := parallel.NewWork(work.Workers())
 		entries := make(chan *Entry, iwork.SuggestBufferSize(0)); entry := &Entry{ output: mainOutput }
@@ -75,7 +73,7 @@ func List(input *Input, paths []string, mainOutput abstract.OutputInterface) (ex
 					subOutput := mainOutput.NewSubBuffer("", 0)
 					subOutput.TogglePrintSubBufferNames()
 					subOutput.ToggleOrderBySubBufferNames()
-					list(input, []string{ entry.path }, subOutput)
+					List(input, []string{ entry.path }, subOutput)
 				}
 			}
 		})
@@ -96,7 +94,7 @@ func initialise(input *Input, mainOutput abstract.OutputInterface) {
 		input.writeEntry = WriteEntryShort
 	}
 
-	if input.SortReversed { output.ToggleSortReversed() }
+	if input.SortReversed { mainOutput.ToggleSortReversed() }
 
 	if !input.NoSort {
 		// before sorting remove . from files
@@ -123,23 +121,9 @@ func WriteEntryLong(input *Input, entry *Entry) {
 	name := input.decorate(entry.base, entry.info); owner := "?"; group := "???"
 	mode := os.FileMode(0); modificationTime := time.Time{}; size := int64(0)
 	if entry.info != nil {
-		mode = entry.info.Mode(); modificationTime = entry.info.ModTime()
-		size = entry.info.Size()
-
-		sys := entry.info.Sys() // can be nil!
-		if sys != nil {
-			userId := strconv.Itoa(int(sys.(*syscall.Stat_t).Uid))
-			groupId := int(sys.(*syscall.Stat_t).Gid)
-			userinfo, e := user.LookupId(userId)
-			if e != nil {
-				owner = userId
-			} else {
-				owner = userinfo.Name
-			}
-
-			//FIXME in go 1.7 there will be user.LookupGroup
-				group = strconv.Itoa(int(groupId))
-		}
+		info := iotool.NewFileInfo(entry.path, entry.info)
+		mode = info.Mode(); modificationTime = info.ModTime()
+		size = info.Size(); owner = info.Owner(); group = info.Group()
 	}
 
 	if mode & os.ModeSymlink == os.ModeSymlink {
@@ -151,14 +135,14 @@ func WriteEntryLong(input *Input, entry *Entry) {
 		}
 	}
 
-	entry.output.Lock()
-	entry.output.WriteSorted("%v", name+"a", mode)
-	entry.output.WriteSorted("%v", name+"b", owner)
-	entry.output.WriteSorted("%v", name+"c", group)
-	entry.output.WriteSorted("%v", name+"d", size)
-	entry.output.WriteSorted("%v", name+"e", modificationTime.Format(time.Stamp))
-	entry.output.WriteSorted("%v\n", name+"f", name)
-	entry.output.Unlock()
+	entry.output.WriteSorted("%v", name, fmt.Sprintf("%v\t%v\t%v\t%v\t%v\t%v\n",
+						mode,
+						owner,
+						group,
+						size,
+						modificationTime.Format(TIME_FORMAT),
+						name,
+					    ))
 }
 
 func WriteEntryShort(input *Input, entry *Entry) {

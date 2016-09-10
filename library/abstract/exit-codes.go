@@ -72,14 +72,22 @@ const(
 	// doesn't exist
 	ERROR_FILE_NOT_FOUND		= 109
 
+	// file already exist. file will not be overriden
+	ERROR_FILE_EXIST		= 110
+
 	// open error
-	ERROR_OPENING_FILE		= 110
+	ERROR_OPENING_FILE		= 111
 
 	// reading error on io.Read
-	ERROR_READING			= 111
+	ERROR_READING			= 112
+
+	// couldn't stat inode
+	ERROR_STAT			= 113
 
 	// TODO remove
-	ERROR_COMPAT			= 112
+	ERROR_COMPAT			= 199
+
+
 
 	/*
 	*  anything >= 200 is an internal error that might or might not have anything to do with

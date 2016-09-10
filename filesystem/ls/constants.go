@@ -5,6 +5,8 @@ import(
 )
 
 const(
+	TIME_FORMAT = "Jan _2 15:04"
+
 	// FIXME lookup standard decorates
 	DIRECTORY	= "/"
 	TEMPORARY	= "?"

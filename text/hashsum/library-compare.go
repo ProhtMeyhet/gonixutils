@@ -11,7 +11,7 @@ import(
 )
 
 func Compare(input *Input) (exitCode uint8) {
-	work := parallel.NewStringFeeder(input.PathList)
+	work := parallel.NewStringsFeeder(input.PathList...)
 	output := abstract.NewOutput(input.Stdout, input.Stderr)
 
 // TODO

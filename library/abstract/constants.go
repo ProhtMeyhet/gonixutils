@@ -2,10 +2,13 @@ package abstract
 
 const(
 	// to debug or not to debug, that is the question
-	DEBUG = false
+	DEBUG			= false
 
 	// this token stands for stdin
-	STDIN_TOKEN = "-"
+	STDIN_TOKEN		= "-"
+
+	// part file extension
+	EXTENSION_PART		= ".part"
 
 	// global setting for FADVICE_DONTNEED before reading
 	SET_FILE_ADVICE_DONTNEED = true

@@ -42,7 +42,7 @@ func Concat(input *Input, output abstract.OutputInterface, helper *iotool.FileHe
 			output.Write("%s", buffer.Bytes())
 			if i == 0 { i++ }
 		}
-	})
+	}).Wait()
 
 	return
 }

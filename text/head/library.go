@@ -39,9 +39,8 @@ func Limit(input *Input, output abstract.OutputInterface, helper *iotool.FileHel
 		limit func(io.Reader) io.Reader) (exitCode uint8) {
 	key := 0
 	parallel.ReadFilesFilteredSequential(helper, input.Paths, limit, func(buffers chan *iotool.NamedBuffer) {
-		i := 0
 		for buffer := range buffers {
-			if !input.Quiet && len(input.Paths) > 1 && i == 0 {
+			if len(input.Paths) > 1 && !input.Quiet && buffer.Next() {
 				if key == 0 {
 					output.Write("==>%v<==\n", input.Paths[0])
 				} else {
@@ -50,15 +49,9 @@ func Limit(input *Input, output abstract.OutputInterface, helper *iotool.FileHel
 				key++
 			}
 
-			if buffer.Done() {
-				i = 0
-				continue
-			}
-
 			output.Write("%s", buffer.Bytes())
-			if i == 0 { i++ }
 		}
-	})
+	}).Wait()
 
 	return
 }
