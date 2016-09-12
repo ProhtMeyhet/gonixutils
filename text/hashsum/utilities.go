@@ -8,7 +8,7 @@ import(
 )
 
 func prepareFileHelper(input *Input, output abstract.OutputInterface, exitCode *uint8) (helper *iotool.FileHelper) {
-	helper = iotool.ReadOnly().ToggleFileAdviceReadSequential()
+	helper = iotool.ReadOnly().ToggleFileAdviceReadSequential().ToggleFileAdviceWillNeed()
 	helper.SetStdinStdout(abstract.STDIN_TOKEN, input.Stdin, input.Stdout)
 	if input.NoCache { helper.ToggleFileAdviceDontNeed() }
 	helper.SetE(func(name string, e error) {

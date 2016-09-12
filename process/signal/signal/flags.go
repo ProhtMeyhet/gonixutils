@@ -51,7 +51,7 @@ func (flags *flagConfig) Parse() {
 		}
 	}
 
-	flags.Help, flags.Verbose, flags.Version = flags.ParseFinally()
+	flags.Help, flags.Version, flags.Verbose, flags.VerboseLevel = flags.ParseFinally()
 
 	if flags.unparsedSignal != signal.DEFAULT_SIGNAL {
 		// first try to parse as a number

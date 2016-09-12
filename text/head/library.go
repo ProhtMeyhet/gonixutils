@@ -3,11 +3,12 @@ package head
 import(
 	"io"
 
-	"github.com/ProhtMeyhet/libgosimpleton/iotool"
+//	"github.com/ProhtMeyhet/libgosimpleton/iotool"
 	"github.com/ProhtMeyhet/libgosimpleton/iotool/ioreaders"
-	"github.com/ProhtMeyhet/libgosimpleton/parallel"
+//	"github.com/ProhtMeyhet/libgosimpleton/parallel"
 
 	"github.com/ProhtMeyhet/gonixutils/library/abstract"
+	"github.com/ProhtMeyhet/gonixutils/text/cat"
 )
 
 // unix head
@@ -27,31 +28,14 @@ func Head(input *Input) (exitCode uint8) {
 	}
 
 	output := abstract.NewOutput(input.Stdout, input.Stderr)
+	if len(input.Paths) > 1 { output.TogglePrintSubBufferNames() }
 	helper := prepareFileHelper(input, output, &exitCode)
 
-	exitCode = Limit(input, output, helper, limit)
+	e := cat.WriteFilesFilteredToOutput(output, helper, limit, input.Paths...); if e != nil && exitCode == 0 {
+		// TODO parse the error and set exitCode accordingly
+		exitCode = abstract.ERROR_UNHANDLED
+	}
 
-	output.Done(); output.Wait()
-	return
-}
 
-func Limit(input *Input, output abstract.OutputInterface, helper *iotool.FileHelper,
-		limit func(io.Reader) io.Reader) (exitCode uint8) {
-	key := 0
-	parallel.ReadFilesFilteredSequential(helper, input.Paths, limit, func(buffers chan *iotool.NamedBuffer) {
-		for buffer := range buffers {
-			if len(input.Paths) > 1 && !input.Quiet && buffer.Next() {
-				if key == 0 {
-					output.Write("==>%v<==\n", input.Paths[0])
-				} else {
-					output.Write("\n==>%v<==\n", input.Paths[key])
-				}
-				key++
-			}
-
-			output.Write("%s", buffer.Bytes())
-		}
-	}).Wait()
-
-	return
+	output.Done(); output.Wait(); return
 }

@@ -86,6 +86,7 @@ func NewTabbedOutput(out, e io.Writer) OutputInterface {
 	return output
 }
 
+// TODO add a possibilty to asynchronously flushing the buffer to it's parent when done
 // TODO add a copy function
 // return a new subbuffer that is automatically flushed to the main buffer when done
 // name can be printed, key can be used for keeping a sort order in output
@@ -163,17 +164,22 @@ func (output *Output) Initialise(out, e io.Writer) {
 	}()
 }
 
-func (output *Output) Write(format string, values ...interface{}) {
+// write through
+func (output *Output) Write(values []byte) (int, error) {
+	return output.outwrite.Write(values)
+}
+
+func (output *Output) WriteFormatted(format string, values ...interface{}) {
 	output.out <-&Message{ Format: format, Values: values }
 }
 
 // write unsorted
 func (output *Output) WriteSorted(format, sortkey string, values ...interface{}) {
-	output.Write(format, values...)
+	output.WriteFormatted(format, values...)
 }
 
 func (output *Output) Append(format string, values ...interface{}) {
-	output.Write(format, values...)
+	output.WriteFormatted(format, values...)
 }
 
 func (output *Output) WriteE(e error) bool {

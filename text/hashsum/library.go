@@ -3,6 +3,7 @@ package hashsum
 import(
 	"encoding/hex"
 	"hash"
+	"io"
 
 	"github.com/ProhtMeyhet/libgosimpleton/simpleton"
 	"github.com/ProhtMeyhet/libgosimpleton/iotool"
@@ -24,25 +25,12 @@ func doHash(input *Input, factory func() hash.Hash) (exitCode uint8) {
 }
 
 func Do(input *Input, output abstract.OutputInterface, helper *iotool.FileHelper, factory func() hash.Hash, paths <-chan string) (exitCode uint8) {
-	parallel.OpenFilesDoWork(helper, paths, func(buffers chan *iotool.NamedBuffer) {
+	parallel.OpenFilesDoWork(helper, paths, func(buffered *iotool.NamedBuffer) {
 		hasher := factory()
-		for buffered := range buffers {
-			if buffered.Done() {
-				output.Write("%v  %v\n", hex.EncodeToString(hasher.Sum(nil)), buffered.Name())
-				hasher.Reset()
-				continue
-			}
-
-			written, e := hasher.Write(buffered.Bytes())
-			if written != buffered.Read() {
-				output.WriteError("short write on hasher! output probably wrong!")
-				exitCode = ERROR_HASH_FUNCTION
-			}
-
-			if output.WriteE(e) {
-				exitCode = ERROR_HASH_FUNCTION
-			}
+		_, e := io.Copy(hasher, buffered); if output.WriteE(e) {
+			exitCode = ERROR_HASH_FUNCTION; return
 		}
+		output.WriteFormatted("%v  %v\n", hex.EncodeToString(hasher.Sum(nil)), buffered.Name())
 	}).Wait()
 
 	return

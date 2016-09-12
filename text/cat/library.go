@@ -1,7 +1,8 @@
 package cat
 
 import(
-
+	"fmt"
+	"io"
 
 	"github.com/ProhtMeyhet/libgosimpleton/iotool"
 	"github.com/ProhtMeyhet/libgosimpleton/parallel"
@@ -12,37 +13,37 @@ import(
 // unix cat
 func Cat(input *Input) (exitCode uint8) {
 	output := abstract.NewOutput(input.Stdout, input.Stderr)
+	if input.Verbose { output.TogglePrintSubBufferNames() }
 	helper := prepareFileHelper(input, output, &exitCode)
 
-	exitCode = Concat(input, output, helper)
+	e := WriteFilesToOutput(output, helper, input.Paths...); if e != nil && exitCode == 0 {
+		// TODO parse the error and set exitCode accordingly
+		exitCode = abstract.ERROR_UNHANDLED
+	}
 
-	output.Done(); output.Wait()
-	return
+	output.Done(); output.Wait(); return
 }
 
-func Concat(input *Input, output abstract.OutputInterface, helper *iotool.FileHelper) (exitCode uint8) {
-	key := 0
-	parallel.ReadFilesSequential(helper, input.Paths, func(buffers chan *iotool.NamedBuffer) {
-		i := 0
-		for buffer := range buffers {
-			if input.Verbose && len(input.Paths) > 1 && i == 0 {
-				if key == 0 {
-					output.Write("==>%v<==\n", input.Paths[key])
-				} else {
-					output.Write("\n==>%v<==\n", input.Paths[key])
-				}
-				key++
-			}
+func WriteFilesToOutput(mainOutput abstract.OutputInterface, helper *iotool.FileHelper, paths ...string) (e error) {
+	return WriteFilesFilteredToOutput(mainOutput, helper, nil, paths...)
+}
 
-			if buffer.Done() {
-				i = 0
-				continue
-			}
-
-			output.Write("%s", buffer.Bytes())
-			if i == 0 { i++ }
+func WriteFilesFilteredToOutput(mainOutput abstract.OutputInterface, helper *iotool.FileHelper,
+		filter func(io.Reader) io.Reader, paths ...string) (e error) {
+	output := mainOutput; var filtered io.Reader
+	parallel.ReadFilesSequential(helper, paths, func(buffered *iotool.NamedBuffer) {
+		// use a subbuffer if required
+		if output.PrintSubBufferNames() {
+			output = mainOutput.NewSubBuffer(fmt.Sprintf("==>%v<==\n", buffered.Name()), 0)
 		}
-	}).Wait()
 
-	return
+		// apply filter
+		if filter != nil { filtered = filter(buffered) }
+		// if the filter func failed, use the buffered
+		if filtered == nil { filtered = buffered }
+
+		// copy and close
+		io.Copy(output, filtered); buffered.Close()
+		if output.PrintSubBufferNames() { output.Done() }
+	}).Wait(); return
 }

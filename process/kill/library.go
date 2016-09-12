@@ -36,7 +36,7 @@ func Kill(input *Input) (exitCode uint8) {
 			signal(input, process, syscall.SIGSTOP)
 		}*/
 
-		abstract.PrintError(`process '%v' did not respond to SIGTERM, SIGINT nor SIGQUIT. ` +
+		abstract.PrintError(e, input.Stderr, `process '%v' did not respond to SIGTERM, SIGINT nor SIGQUIT. ` +
 					`i suggest deleting the non conformant binary.`, processId)
 	}
 

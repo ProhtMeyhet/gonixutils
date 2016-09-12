@@ -7,11 +7,11 @@ import(
 
 type OutputInterface interface {
 	sync.Locker
+	io.Writer
 
 	Initialise(io, e io.Writer)
 
-	// write with format
-	Write(format string, values ...interface{})
+	WriteFormatted(format string, values ...interface{})
 	// buffer output if aplicable and sort it before outputting
 	WriteSorted(format, sortkey string, values ...interface{})
 

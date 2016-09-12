@@ -107,7 +107,7 @@ func compare1(input *Input, output abstract.OutputInterface, list chan string) (
 						output.WriteError("%s: FAILED!\n", path)
 						work.Lock(); unequalHashes++; work.Unlock()
 					} else if !input.Quiet {
-						output.Write("%s: OK\n", path)
+						output.WriteFormatted("%s: OK\n", path)
 					}
 					delete(hashPaths, path)
 				}

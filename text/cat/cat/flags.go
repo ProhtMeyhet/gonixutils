@@ -26,7 +26,7 @@ func (flags *CatFlags) GetInput() *cat.Input {
 
 func (flags *CatFlags) Parse() {
 	optarg.Header("Options for " + os.Args[0])
-//	optarg.Add("n", "number", "number each output lines", false)
+	optarg.Add("u", "uignorius", "ignored.", false)
 
 	if abstract.SET_FILE_ADVICE_DONTNEED {
 		optarg.Add("x", "no-cache", "try not to leave caches behind (set file advice dont need)", false)
@@ -37,8 +37,6 @@ func (flags *CatFlags) Parse() {
 	for option := range optarg.Parse() {
 		if flags.ParseOption(option) { continue }
 		switch option.ShortName {
-		case "n":
-			flags.NumberLines = option.Bool()
 		case "x":
 			if abstract.SET_FILE_ADVICE_DONTNEED { flags.NoCache = option.Bool() }
 		}
@@ -59,10 +57,4 @@ func (flags *CatFlags) Parse() {
 
 func (flags *CatFlags) Validate() {
 	flags.Flags.Validate()
-
-/*
-	if len(flags.Paths) == 0 {
-		flags.Usage()
-		os.Exit(abstract.ERROR_NO_INPUT)
-	}*/
 }

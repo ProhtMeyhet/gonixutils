@@ -73,8 +73,8 @@ func (output *SortedOutput) Initialise(out, e io.Writer) {
 }
 
 // soft sort. tries to use the first value as stringkey
-func (output *SortedOutput) Write(format string, values ...interface{}) {
-	if len(values) == 0 || len(values) - 1 < output.usekey { output.Output.Write(format, values...); return }
+func (output *SortedOutput) WriteFormatted(format string, values ...interface{}) {
+	if len(values) == 0 || len(values) - 1 < output.usekey { output.Output.WriteFormatted(format, values...); return }
 	sortkey, ok := values[output.usekey].(string); if !ok { output.intsortkey++; sortkey = strconv.Itoa(output.intsortkey) }
 	output.WriteSorted(format, sortkey, values...)
 }
@@ -127,11 +127,11 @@ func (output *SortedOutput) Done() {
 	}
 
 	for _, key := range sorted {
-		output.Output.Write(output.buffer[key].Format, output.buffer[key].Values...)
+		output.Output.WriteFormatted(output.buffer[key].Format, output.buffer[key].Values...)
 	}
 
 	for _, value := range output.appendBuffer {
-		output.Output.Write(value.Format, value.Values...)
+		output.Output.WriteFormatted(value.Format, value.Values...)
 	}
 
 	output.Output.Done()

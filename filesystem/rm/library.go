@@ -9,23 +9,33 @@ import (
 	"time"
 
 	"github.com/ProhtMeyhet/libgosimpleton/iotool"
+	"github.com/ProhtMeyhet/libgosimpleton/parallel"
 
 	"github.com/ProhtMeyhet/gonixutils/library/abstract"
 )
 
 // remove filesystem entries given in the input.PathList
 func Rm(input *Input) (exitCode uint8) {
-	for _, path := range input.PathList {
-		e, _ := Remove(input, path)
-		if e != nil {
-			io.WriteString(input.Stderr, e.Error() + "\n")
-			// FIXME more fine grained error
-			exitCode = abstract.FAILED
+	work := parallel.NewStringsFeeder(input.PathList...)
+
+	work.Start(func() {
+		for path := range work.Talk {
+			// TODO more fine grained locking if Interactive (stats parallel)
+			if input.Interactive { work.Lock() }
+			e, _ := Remove(input, path)
+			if e != nil {
+				io.WriteString(input.Stderr, e.Error() + "\n")
+				// FIXME more fine grained error
+				exitCode = abstract.FAILED
+			}
+			if input.Interactive { work.Unlock() }
 		}
-	}
+	}); work.Wait()
 
 	return
 }
+
+// TODO asynchronously remove if Recursive
 
 // remove one filesystem entry.
 // with input.Recursive, remove all filesystem entries within a directory and the directory.
@@ -109,7 +119,7 @@ out:
 }
 
 // alias
-func Delete(input *Input, path string) {
+func Delete(input *Input, path string) (e error, allRemoved bool) {
 	return Remove(input, path)
 }
 

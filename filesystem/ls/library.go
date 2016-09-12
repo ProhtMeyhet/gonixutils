@@ -149,10 +149,10 @@ func WriteEntryShort(input *Input, entry *Entry) {
 	format := "%v "; if input.Lines { format += "\n" }
 	if entry.info != nil {
 		decorated := input.decorate(entry.base, entry.info)
-		entry.output.Write(format, decorated)
+		entry.output.WriteFormatted(format, decorated)
 	} else {
 		decorated := input.decorate(entry.base, nil)
-		entry.output.Write(format, decorated)
+		entry.output.WriteFormatted(format, decorated)
 	}
 }
 
