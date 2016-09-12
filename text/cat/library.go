@@ -30,8 +30,9 @@ func WriteFilesToOutput(mainOutput abstract.OutputInterface, helper *iotool.File
 
 func WriteFilesFilteredToOutput(mainOutput abstract.OutputInterface, helper *iotool.FileHelper,
 		filter func(io.Reader) io.Reader, paths ...string) (e error) {
-	output := mainOutput; var filtered io.Reader
+	output := mainOutput
 	parallel.ReadFilesSequential(helper, paths, func(buffered *iotool.NamedBuffer) {
+		var filtered io.Reader
 		// use a subbuffer if required
 		if output.PrintSubBufferNames() {
 			output = mainOutput.NewSubBuffer(fmt.Sprintf("==>%v<==\n", buffered.Name()), 0)
@@ -43,7 +44,7 @@ func WriteFilesFilteredToOutput(mainOutput abstract.OutputInterface, helper *iot
 		if filtered == nil { filtered = buffered }
 
 		// copy and close
-		io.Copy(output, filtered); buffered.Close()
+		_, e = io.Copy(output, filtered)
 		if output.PrintSubBufferNames() { output.Done() }
 	}).Wait(); return
 }
