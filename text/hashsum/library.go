@@ -17,14 +17,14 @@ import(
 //
 //   — Henry Spencer
 
-func doHash(input *Input, factory func() hash.Hash) (exitCode uint8) {
+func hashsum(input *Input, factory func() hash.Hash) (exitCode uint8) {
 	output := abstract.NewOutput(input.Stdout, input.Stderr)
 	helper := prepareFileHelper(input, output, &exitCode)
-	exitCode = DoFromList(input, output, helper, factory, input.PathList...)
+	exitCode = HashFromList(input, output, helper, factory, input.PathList...)
 	output.Done(); output.Wait(); return
 }
 
-func Do(input *Input, output abstract.OutputInterface, helper *iotool.FileHelper, factory func() hash.Hash, paths <-chan string) (exitCode uint8) {
+func Hash(input *Input, output abstract.OutputInterface, helper *iotool.FileHelper, factory func() hash.Hash, paths <-chan string) (exitCode uint8) {
 	parallel.OpenFilesDoWork(helper, paths, func(buffered *iotool.NamedBuffer) {
 		hasher := factory()
 		_, e := io.Copy(hasher, buffered); if output.WriteE(e) {
@@ -36,6 +36,6 @@ func Do(input *Input, output abstract.OutputInterface, helper *iotool.FileHelper
 	return
 }
 
-func DoFromList(input *Input, output abstract.OutputInterface, helper *iotool.FileHelper, factory func() hash.Hash, paths ...string) (exitCode uint8) {
-	return Do(input, output, helper, factory, simpleton.StringListToChannel(paths...))
+func HashFromList(input *Input, output abstract.OutputInterface, helper *iotool.FileHelper, factory func() hash.Hash, paths ...string) (exitCode uint8) {
+	return Hash(input, output, helper, factory, simpleton.StringListToChannel(paths...))
 }

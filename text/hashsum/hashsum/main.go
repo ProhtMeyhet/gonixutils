@@ -14,5 +14,5 @@ func main() {
 	input := flags.GetInput()
 	input.InitCli()
 
-	os.Exit(int(gonixutils.Hash(input)))
+	os.Exit(int(gonixutils.Hashsum(input)))
 }
