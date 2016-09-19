@@ -1,7 +1,7 @@
 package ps
 
 import(
-
+	"strconv"
 
 	"github.com/ProhtMeyhet/libgosimpleton/parallel"
 	"github.com/ProhtMeyhet/libgosimpleton/system"
@@ -25,7 +25,7 @@ func Processes(input *Input, output abstract.OutputInterface) (exitCode uint8) {
 		}
 	}
 
-	ListProcessesById(output, input.ProcessIds...)
+	ListProcessesById(input, output, input.ProcessIds...)
 	ListProcessesByName(input, output, input.Processes...)
 	return
 }
@@ -53,32 +53,19 @@ func ListProcessesByName(input *Input, output abstract.OutputInterface, processe
 	if len(processes) == 0 { return }
 
 	work := parallel.NewStringsFeeder(processes...)
-	out := func(name string, process *system.ProcessInfo) {
-		if process == nil {
-			if input.Verbose {
-				output.WriteFormatted("process '%v' not found.", name)
-			}
-			return
-		}
-		if input.Dump {
-			output.WriteFormatted("%s\n", process.String())
-		} else {
-			output.WriteFormatted(" %v\t%v\n", process.Id(), process.Name())
-		}
-	}
 
 	work.Start(func() {
 		for name := range work.Talk {
 			switch {
 			case input.Oldest:
 				process := system.FindOldestProcessByName(name)
-				out(name, process)
+				out(input, output, name, process)
 			case input.Youngest:
 				process := system.FindYoungestProcessByName(name)
-				out(name, process)
+				out(input, output, name, process)
 			default:
 				for _, process := range system.FindProcessesByName(name) {
-					out(name, process)
+					out(input, output, name, process)
 				}
 			}
 		}
@@ -88,18 +75,31 @@ func ListProcessesByName(input *Input, output abstract.OutputInterface, processe
 }
 
 // FIXME remove repeated arguments (eg giving pid 1 twice or more)
-func ListProcessesById(output abstract.OutputInterface, processIds ...uint64) {
+func ListProcessesById(input *Input, output abstract.OutputInterface, processIds ...uint64) {
 	if len(processIds) == 0 { return }
 
 	work := parallel.NewUints64Feeder(processIds...)
 
 	work.Start(func() {
 		for pid := range work.Talk {
-			info, e := system.FindProcess(pid); if output.WriteE(e) { continue }
-			output.WriteFormatted(" %v\t%v\n", pid, info.Name())
+			process, e := system.FindProcess(pid); if output.WriteE(e) { continue }
+			out(input, output, strconv.FormatUint(pid, 10), process)
 		}
 	})
 
 	work.Wait()
 }
 
+func out(input *Input, output abstract.OutputInterface, name string, process *system.ProcessInfo) {
+	if process == nil {
+		if input.Verbose {
+			output.WriteFormatted("process '%v' not found.", name)
+		}
+		return
+	}
+	if input.Dump {
+		output.WriteFormatted("%s\n", process.String())
+	} else {
+		output.WriteFormatted(" %v\t%v\n", process.Id(), process.Name())
+	}
+}
