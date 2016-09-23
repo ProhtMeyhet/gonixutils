@@ -31,9 +31,7 @@ func Hash(input *Input, output abstract.OutputInterface, helper *iotool.FileHelp
 			exitCode = ERROR_HASH_FUNCTION; return
 		}
 		output.WriteFormatted("%v  %v\n", hex.EncodeToString(hasher.Sum(nil)), buffered.Name())
-	}).Wait()
-
-	return
+	}).Wait(); return
 }
 
 func HashFromList(input *Input, output abstract.OutputInterface, helper *iotool.FileHelper, factory func() hash.Hash, paths ...string) (exitCode uint8) {

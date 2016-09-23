@@ -2,7 +2,7 @@ package abstract
 
 const(
 	/*
-	*  SUCCESS is anything < 10
+	*  SUCCESS is anything < 10, except, for historic reasons, 1
 	*  but >= 1 is only partly successful
 	*  but >= 9 empty or partly empty
 	*/
@@ -28,7 +28,7 @@ const(
 	// some of the output wasn't outputted because it was empty.
 	PARTLY_EMPTY	= 10
 
-	// maximum success. used for if exitCode > SUCCESSFUL
+	// maximum success. used internally for if exitCode > SUCCESSFUL
 	SUCCESSFUL	= 10
 
 
