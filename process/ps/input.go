@@ -20,6 +20,8 @@ type Input struct {
 	Youngest	bool
 	Dump		bool
 
+	NoColor		bool
+
 	// be posix, not gonix
 	IsPosix		bool
 }

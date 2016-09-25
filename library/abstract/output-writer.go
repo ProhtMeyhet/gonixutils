@@ -78,7 +78,7 @@ func NewOutput(out, e io.Writer) (output OutputInterface) {
 
 func NewTabbedOutput(out, e io.Writer) OutputInterface {
 	output := &Output{ }
-	output.tabwriter = tabwriter.NewWriter(out, 32, 0, 0, ' ', 0)
+	output.tabwriter = tabwriter.NewWriter(out, 32, 0, 0, '-', tabwriter.Debug)
 	output.terminalInfo = new(TerminalInfo)
 //	output.tabMax = output.terminalInfo.Width() / (7 + 3)
 	output.Initialise(output.tabwriter, e)
@@ -209,8 +209,16 @@ func (output *Output) Done() {
 }
 
 func (output *Output) tabWrite(toWrite string) {
+/*	// FIXME: please write a real tabwriter, instead of trying to fix this one
+	// FIXME: try to test if the last one contains delimiter and print \n
+	if strings.Contains(toWrite, output.delimiter) &&
+		output.writeCount + 2 * output.tabBufferMax > output.terminalInfo.Width() -10 {
+		toWrite += "\n"
+	}*/
+
 	//output.id++; toWrite = fmt.Sprintf("%v %v %v %v! ", output.id, output.writeCount, columnLen, output.terminalInfo.Width())
-	if output.writeCount + output.tabBufferMax > output.terminalInfo.Width() {
+	// FIXME output.terminalInfo.Width() - 20 seems to be a good value...
+	if output.writeCount + output.tabBufferMax > output.terminalInfo.Width() - 20 {
 		toWrite += "\n"; output.writeCount = 0; output.newLinePrintedOnce = true
 	} else { output.writeCount += output.tabBufferMax }
 	fmt.Fprint(output.tabwriter, toWrite)
@@ -231,6 +239,7 @@ func (output *Output) Wait() {
 		// FIXME : tabwriter.Init() results in endless loop!
 		if output.linesManual { output.tabBufferMax = 5 }
 		output.tabwriter = tabwriter.NewWriter(output.outwrite, output.tabBufferMax, 0, 1, ' ', tabwriter.DiscardEmptyColumns)
+//		output.tabwriter = tabwriter.NewWriter(output.outwrite, output.tabBufferMax, 0, 1, '-', tabwriter.DiscardEmptyColumns|tabwriter.Debug)
 		for _, value := range output.tabBuffer {
 			if !output.linesManual {
 				output.newLinePrintedOnce = false

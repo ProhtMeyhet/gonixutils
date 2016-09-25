@@ -11,7 +11,6 @@ import(
 
 func Ps(input *Input) (exitCode uint8) {
 	output := abstract.NewTabbedOutput(input.Stdout, input.Stderr)
-	output.ToggleLinesManual()
 	exitCode = Processes(input, output)
 	output.Done(); output.Wait(); return
 }
@@ -19,9 +18,9 @@ func Ps(input *Input) (exitCode uint8) {
 func Processes(input *Input, output abstract.OutputInterface) (exitCode uint8) {
 	if len(input.ProcessIds) == 0 && len(input.Processes) == 0 {
 		if input.IsPosix {
-			return OverviewPosix(output)
+			return OverviewPosix(input, output)
 		} else {
-			return Overview(output)
+			return Overview(input, output)
 		}
 	}
 
@@ -30,21 +29,18 @@ func Processes(input *Input, output abstract.OutputInterface) (exitCode uint8) {
 	return
 }
 
-func Overview(output abstract.OutputInterface) (exitCode uint8) {
+func Overview(input *Input, output abstract.OutputInterface) (exitCode uint8) {
 	myProcesses := system.FindMyProcesses()
 	for _, process := range myProcesses {
-		output.WriteFormatted(" %v\t%v\t%v\n", process.Id(),
-							process.VirtualMemory(),
-							process.Name(),
-							)
+		out(input, output, "", process)
 	}
 
-	output.WriteFormatted("Total:\t%v\n", len(myProcesses))
+	output.WriteFormatted("\nTotal: %v", len(myProcesses))
 
 	return
 }
 
-func OverviewPosix(output abstract.OutputInterface) (exitCode uint8) {
+func OverviewPosix(input *Input, output abstract.OutputInterface) (exitCode uint8) {
 	return
 }
 
@@ -100,6 +96,14 @@ func out(input *Input, output abstract.OutputInterface, name string, process *sy
 	if input.Dump {
 		output.WriteFormatted("%s\n", process.String())
 	} else {
-		output.WriteFormatted(" %v\t%v\n", process.Id(), process.Name())
+		output.WriteFormatted(decorate(input), process.Id(), process.Name())
 	}
+}
+
+func decorate(input *Input) string {
+	if input.NoColor {
+		return "%v %v"
+	}
+
+	return abstract.TERMINAL_COLOR_GREEN + "%v" + abstract.TERMINAL_COLOR_RESET + " %v"
 }
