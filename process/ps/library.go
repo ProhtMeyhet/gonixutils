@@ -24,6 +24,7 @@ func Processes(input *Input, output abstract.OutputInterface) (exitCode uint8) {
 		}
 	}
 
+	output.ToggleLinesManual()
 	ListProcessesById(input, output, input.ProcessIds...)
 	ListProcessesByName(input, output, input.Processes...)
 	return
@@ -32,7 +33,7 @@ func Processes(input *Input, output abstract.OutputInterface) (exitCode uint8) {
 func Overview(input *Input, output abstract.OutputInterface) (exitCode uint8) {
 	myProcesses := system.FindMyProcesses()
 	for _, process := range myProcesses {
-		out(input, output, "", process)
+		output.WriteFormatted(decorate(input), process.Id(), process.Name())
 	}
 
 	output.WriteFormatted("\nTotal: %v", len(myProcesses))
@@ -96,7 +97,7 @@ func out(input *Input, output abstract.OutputInterface, name string, process *sy
 	if input.Dump {
 		output.WriteFormatted("%s\n", process.String())
 	} else {
-		output.WriteFormatted(decorate(input), process.Id(), process.Name())
+		output.WriteFormatted(decorate(input) + "\n", process.Id(), process.Name())
 	}
 }
 
