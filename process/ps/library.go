@@ -4,7 +4,7 @@ import(
 	"strconv"
 
 	"github.com/ProhtMeyhet/libgosimpleton/parallel"
-	"github.com/ProhtMeyhet/libgosimpleton/system"
+	"github.com/ProhtMeyhet/libgosimpleton/system/processes"
 
 	"github.com/ProhtMeyhet/gonixutils/library/abstract"
 )
@@ -31,9 +31,14 @@ func Processes(input *Input, output abstract.OutputInterface) (exitCode uint8) {
 }
 
 func Overview(input *Input, output abstract.OutputInterface) (exitCode uint8) {
-	myProcesses := system.FindMyProcesses()
+	if input.Dump { output.ToggleLinesManual() }
+	myProcesses := processes.FindMyAll()
 	for _, process := range myProcesses {
-		output.WriteFormatted(decorate(input), process.Id(), process.Name())
+		if input.Dump {
+			output.WriteFormatted(decorate(input) + "\n", process.Id(), process.CommandLine())
+		} else {
+			output.WriteFormatted(decorate(input), process.Id(), process.Name())
+		}
 	}
 
 	output.WriteFormatted("\nTotal: %v", len(myProcesses))
@@ -46,22 +51,22 @@ func OverviewPosix(input *Input, output abstract.OutputInterface) (exitCode uint
 }
 
 // FIXME remove repeated arguments (eg giving firefox twice or more)
-func ListProcessesByName(input *Input, output abstract.OutputInterface, processes ...string) {
-	if len(processes) == 0 { return }
+func ListProcessesByName(input *Input, output abstract.OutputInterface, process ...string) {
+	if len(process) == 0 { return }
 
-	work := parallel.NewStringsFeeder(processes...)
+	work := parallel.NewStringsFeeder(process...)
 
 	work.Start(func() {
 		for name := range work.Talk {
 			switch {
 			case input.Oldest:
-				process := system.FindOldestProcessByName(name)
+				process := processes.FindOldestByName(name)
 				out(input, output, name, process)
 			case input.Youngest:
-				process := system.FindYoungestProcessByName(name)
+				process := processes.FindYoungestByName(name)
 				out(input, output, name, process)
 			default:
-				for _, process := range system.FindProcessesByName(name) {
+				for _, process := range processes.FindByName(name) {
 					out(input, output, name, process)
 				}
 			}
@@ -72,14 +77,14 @@ func ListProcessesByName(input *Input, output abstract.OutputInterface, processe
 }
 
 // FIXME remove repeated arguments (eg giving pid 1 twice or more)
-func ListProcessesById(input *Input, output abstract.OutputInterface, processIds ...uint64) {
-	if len(processIds) == 0 { return }
+func ListProcessesById(input *Input, output abstract.OutputInterface, processId ...uint64) {
+	if len(processId) == 0 { return }
 
-	work := parallel.NewUints64Feeder(processIds...)
+	work := parallel.NewUints64Feeder(processId...)
 
 	work.Start(func() {
 		for pid := range work.Talk {
-			process, e := system.FindProcess(pid); if output.WriteE(e) { continue }
+			process, e := processes.Find(pid); if output.WriteE(e) { continue }
 			out(input, output, strconv.FormatUint(pid, 10), process)
 		}
 	})
@@ -87,7 +92,7 @@ func ListProcessesById(input *Input, output abstract.OutputInterface, processIds
 	work.Wait()
 }
 
-func out(input *Input, output abstract.OutputInterface, name string, process *system.ProcessInfo) {
+func out(input *Input, output abstract.OutputInterface, name string, process *processes.ProcessInfo) {
 	if process == nil {
 		if input.Verbose {
 			output.WriteFormatted("process '%v' not found.", name)

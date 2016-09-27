@@ -1,0 +1,13 @@
+ 192.168.0.5/24
+
+ Kernel IP routing table
+ Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+ default         192.168.0.1     0.0.0.0         UG    0      0        0 eth1
+ 192.168.0.0     *               255.255.255.0   U     0      0        0 eth1
+ 192.168.66.0    *               255.255.255.0   U     0      0        0 br-lan
+
+ 3: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel master br-lan state UP qlen 1000
+     link/ether ec:08:6b:78:78:d8 brd ff:ff:ff:ff:ff:ff
+     inet 192.168.0.5/24 brd 192.168.0.255 scope global eth1
+     valid_lft forever preferred_lft forever
+
