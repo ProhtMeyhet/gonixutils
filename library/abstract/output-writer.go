@@ -78,7 +78,7 @@ func NewOutput(out, e io.Writer) (output OutputInterface) {
 
 func NewTabbedOutput(out, e io.Writer) OutputInterface {
 	output := &Output{ }
-	output.tabwriter = tabwriter.NewWriter(out, 32, 0, 0, '-', tabwriter.Debug)
+	output.tabwriter = tabwriter.NewWriter(out, 32, 0, 0, ' ', 0)
 	output.terminalInfo = new(TerminalInfo)
 //	output.tabMax = output.terminalInfo.Width() / (7 + 3)
 	output.Initialise(output.tabwriter, e)

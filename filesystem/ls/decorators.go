@@ -45,27 +45,28 @@ func PlainDecorator(name string, info os.FileInfo) string {
 // alternating, variegated, opening and then closing themselves in circles and spirals,
 // exploding in colored fountains, rearranging and hybridizing themselves in constant flux (...)
 func ColorDecorator(name string, info os.FileInfo) string {
-	if info == nil {
+	if info == nil || len(name) == 0 {
 		return name
 	}
 
 	mode := info.Mode()
-	if mode & os.ModeTemporary == os.ModeTemporary {
+	switch {
+	case mode & os.ModeTemporary == os.ModeTemporary:
 		return BACKGROUND_TEMPORARY + name + COLOR_RESET
-	} else if mode & os.ModeSymlink == os.ModeSymlink {
+	case mode & os.ModeSymlink == os.ModeSymlink:
 		return COLOR_SYMLINK + name + COLOR_RESET
-	} else if mode & os.ModeDevice == os.ModeDevice {
+	case mode & os.ModeDevice == os.ModeDevice:
 		if mode & os.ModeCharDevice == os.ModeCharDevice {
 			return name //+ COLOR_RESET
 		}
 		return name //+ COLOR_RESET 
-	} else if mode & os.ModeNamedPipe == os.ModeNamedPipe {
+	case mode & os.ModeNamedPipe == os.ModeNamedPipe:
 		return name //+ COLOR_RESET
-	} else if mode & os.ModeSocket == os.ModeSocket {
+	case mode & os.ModeSocket == os.ModeSocket:
 		return name //+ COLOR_RESET
-	} else if mode & os.ModeDir == os.ModeDir {
+	case mode & os.ModeDir == os.ModeDir:
 		return COLOR_DIRECTORY + name + COLOR_RESET
-	} else if mode & 0111 == 0111 { // EXEcuteABLE
+	case mode & 0111 == 0111: // EXEcuteABLE
 		return COLOR_EXECUTEABLE + name + COLOR_RESET
 	}; return name
 }
