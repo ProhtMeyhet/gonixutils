@@ -16,4 +16,6 @@ const(
 
 //	FNV1	Type	= 12
 //	FNV1a	Type	= 13
+
+// XXX when adding or removing a hashtype, remember to update Type.Valid() XXX
 )

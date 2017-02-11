@@ -36,12 +36,14 @@ func compare(input *Input, output abstract.OutputInterface, work *parallel.WorkS
 	return
 }
 
-
 func compare1(input *Input, output abstract.OutputInterface, list chan string) (exitCode uint8) {
-	notFound, unequalHashes, wrongHashFunction, hashlen, expectedHashLen := 0, 0, uint(0), 0, HashLen(input.Type)
+	if !input.Type.Valid() { return abstract.ERROR_INVALID_ARGUMENT }
+
+	notFound, unequalHashes, wrongHashFunction, hashlen, expectedHashLen := 0, 0, uint(0), 0, input.Type.Len()
 	reader, helper := &bufio.Reader{}, prepareFileHelper(input, output, &exitCode)
 	work := parallel.NewWork(0); talk := make(chan HashPath, work.SuggestBufferSize(0))
 
+	// parse input file and send result via talk
 	work.Feed(func() {
 		for path := range list {
 			handler, e := iotool.Open(helper, path); if e != nil { continue }
@@ -72,6 +74,7 @@ func compare1(input *Input, output abstract.OutputInterface, list chan string) (
 		}; close(talk)
 	})
 
+	// read from talk, hash file and compare
 	work.Start(func() {
 		hash1List := make(chan string, work.SuggestBufferSize(0))
 		in := bytes.NewBuffer(make([]byte, 0)); buffered := abstract.NewOutput(in, input.Stderr)
@@ -86,7 +89,7 @@ func compare1(input *Input, output abstract.OutputInterface, list chan string) (
 		})
 
 		iwork.Start(func() {
-			Hash(input, buffered, helper, Factory(input), hash1List)
+			Hash(input, buffered, helper, input.Type.Factory(input), hash1List)
 		})
 
 		// since the output is unordered, wait until everything is finished before comparing

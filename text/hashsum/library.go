@@ -12,7 +12,6 @@ import(
 	"github.com/ProhtMeyhet/gonixutils/library/abstract"
 )
 
-
 // Those who do not understand UNIX are condemned to reinvent it, poorly.
 //
 //   — Henry Spencer
