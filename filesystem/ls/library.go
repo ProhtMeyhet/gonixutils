@@ -27,7 +27,7 @@ func List(input *Input, paths []string, mainOutput abstract.OutputInterface) (ex
 		iwork.Feed(func() {
 			var e error
 			for path := range work.Talk {
-				if path == "" { mainOutput.WriteError("Path is empty!") }
+				if path == "" { mainOutput.WriteError("Path is empty!"); continue }
 				entry.info, e = os.Lstat(path); if mainOutput.WriteE(e) { continue }
 				if entry.info.IsDir() {
 					if !input.Union {
@@ -45,8 +45,8 @@ func List(input *Input, paths []string, mainOutput abstract.OutputInterface) (ex
 							work.Unlock()
 						}
 					}
-					if input.All { writeDotDot(input, entry) }
 					list, e := iotool.ListDirectory(path); if entry.output.WriteE(e) { continue }
+					if input.All { writeDotDot(input, entry) }
 					for _, ipath := range list {
 						entry = &Entry{ output: entry.output }
 						entry.path = pathTools.Join(path, ipath); entry.base = ipath
