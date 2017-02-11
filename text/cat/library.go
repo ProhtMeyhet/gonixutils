@@ -16,7 +16,7 @@ func Cat(input *Input) (exitCode uint8) {
 	if input.Verbose { output.TogglePrintSubBufferNames() }
 	helper := prepareFileHelper(input, output, &exitCode)
 
-	e := WriteFilesToOutput(output, helper, input.Paths...); if e != nil && exitCode == 0 {
+	e := CopyFilesTo(output, helper, input.Paths...); if e != nil && exitCode == 0 {
 		// TODO parse the error and set exitCode accordingly
 		exitCode = abstract.ERROR_UNHANDLED
 	}
@@ -24,11 +24,11 @@ func Cat(input *Input) (exitCode uint8) {
 	output.Done(); output.Wait(); return
 }
 
-func WriteFilesToOutput(mainOutput abstract.OutputInterface, helper *iotool.FileHelper, paths ...string) (e error) {
-	return WriteFilesFilteredToOutput(mainOutput, helper, nil, paths...)
+func CopyFilesTo(mainOutput abstract.OutputInterface, helper *iotool.FileHelper, paths ...string) (e error) {
+	return CopyFilesFilteredTo(mainOutput, helper, nil, paths...)
 }
 
-func WriteFilesFilteredToOutput(mainOutput abstract.OutputInterface, helper *iotool.FileHelper,
+func CopyFilesFilteredTo(mainOutput abstract.OutputInterface, helper *iotool.FileHelper,
 		filter func(io.Reader) io.Reader, paths ...string) (e error) {
 	output := mainOutput
 	parallel.ReadFilesSequential(helper, paths, func(buffered *iotool.NamedBuffer) {

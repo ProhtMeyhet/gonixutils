@@ -31,7 +31,7 @@ func Head(input *Input) (exitCode uint8) {
 	if len(input.Paths) > 1 { output.TogglePrintSubBufferNames() }
 	helper := prepareFileHelper(input, output, &exitCode)
 
-	e := cat.WriteFilesFilteredToOutput(output, helper, limit, input.Paths...); if e != nil && exitCode == 0 {
+	e := cat.CopyFilesFilteredTo(output, helper, limit, input.Paths...); if e != nil && exitCode == 0 {
 		// TODO parse the error and set exitCode accordingly
 		exitCode = abstract.ERROR_UNHANDLED
 	}
