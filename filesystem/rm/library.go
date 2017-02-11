@@ -23,6 +23,7 @@ func Rm(input *Input) (exitCode uint8) {
 			// TODO more fine grained locking if Interactive (stats parallel)
 			if input.Interactive { work.Lock() }
 			e, _ := Remove(input, path)
+			if input.VerboseLevel >= 2 { io.WriteString(input.Stdout, fmt.Sprintf("deleted '%v'\n", path)) }
 			if e != nil {
 				io.WriteString(input.Stderr, e.Error() + "\n")
 				// FIXME more fine grained error
