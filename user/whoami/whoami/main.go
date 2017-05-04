@@ -13,6 +13,7 @@ func main() {
 
 	input := flags.GetInput()
 	input.InitCli()
+	input.Verify()
 
 	os.Exit(int(gonixutils.WhoAmI(input)))
 }
