@@ -12,6 +12,8 @@ type OutputInterface interface {
 	Initialise(io, e io.Writer)
 
 	WriteFormatted(format string, values ...interface{})
+	WriteLine(values ...interface{})
+	WritePerLine(values ...interface{})
 	// buffer output if aplicable and sort it before outputting
 	WriteSorted(format, sortkey string, values ...interface{})
 

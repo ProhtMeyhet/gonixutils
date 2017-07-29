@@ -173,6 +173,20 @@ func (output *Output) WriteFormatted(format string, values ...interface{}) {
 	output.out <-&Message{ Format: format, Values: values }
 }
 
+func (output *Output) WriteLine(values ...interface{}) {
+	output.out <-&Message{ Format: "%v\n", Values: values }
+}
+
+func (output *Output) WritePerLine(values ...interface{}) {
+	go func() {
+		for _, value := range values {
+			interfaceValue := make([]interface{}, 0)
+			interfaceValue = append(interfaceValue, value)
+			output.out <-&Message{ Format: "%v\n", Values: interfaceValue }
+		}
+	}()
+}
+
 // write unsorted
 func (output *Output) WriteSorted(format, sortkey string, values ...interface{}) {
 	output.WriteFormatted(format, values...)
