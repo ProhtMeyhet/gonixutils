@@ -1,0 +1,5 @@
+package sync
+
+const(
+	EXIT_PATHS_GIVEN_BUT_NOT_WHAT_TO_DO_WITH_THEM = 20
+)
