@@ -10,7 +10,7 @@ type Input struct {
 
 	Processes	[]string
 	// FIXME strconv doesn't have support for uint only uint64
-	ProcessIds	[]uint64
+	ProcessIds	[]uint
 
 	All		bool
 	List		bool

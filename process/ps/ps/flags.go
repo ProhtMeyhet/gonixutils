@@ -59,8 +59,8 @@ func (flags *PsFlags) Parse() {
 		// bash adds sometimes an empty argument at the end..
 		if process == "" { continue }
 
-		processId, e := strconv.ParseUint(process, 10, 0); if e == nil {
-			flags.ProcessIds = append(flags.ProcessIds, processId)
+		processId, e := strconv.ParseUint(process, 10, strconv.IntSize); if e == nil {
+			flags.ProcessIds = append(flags.ProcessIds, uint(processId))
 		} else {
 			flags.Processes = append(flags.Processes, process)
 		}

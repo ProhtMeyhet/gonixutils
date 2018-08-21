@@ -77,15 +77,15 @@ func ListProcessesByName(input *Input, output abstract.OutputInterface, process 
 }
 
 // FIXME remove repeated arguments (eg giving pid 1 twice or more)
-func ListProcessesById(input *Input, output abstract.OutputInterface, processId ...uint64) {
+func ListProcessesById(input *Input, output abstract.OutputInterface, processId ...uint) {
 	if len(processId) == 0 { return }
 
-	work := parallel.NewUints64Feeder(processId...)
+	work := parallel.NewUintsFeeder(processId...)
 
 	work.Start(func() {
 		for pid := range work.Talk {
 			process, e := processes.Find(pid); if output.WriteE(e) { continue }
-			out(input, output, strconv.FormatUint(pid, 10), process)
+			out(input, output, strconv.FormatUint(uint64(pid), 10), process)
 		}
 	})
 
