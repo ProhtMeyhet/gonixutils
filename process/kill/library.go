@@ -7,39 +7,44 @@ import(
 
 	"github.com/ProhtMeyhet/gonixutils/library/abstract"
 	"github.com/ProhtMeyhet/gonixutils/process/signal"
+
+	"github.com/ProhtMeyhet/libgosimpleton/parallel"
 )
 
 // in one second intervalls send first SIGTERM, then SIGINT, then SIGQUIT
 // with input.Force, send SIGKILL after SIGQUIT
 // with input.Interactive, send SIGSTOP and wait for user input
 func Kill(input *Input) (exitCode uint8) {
-	for _, processId := range input.ProcessIds {
-		process, e := os.FindProcess(processId)
-		if abstract.PrintErrorWithError(e, input.Stderr, "error: %v") {
-			exitCode = signal.ERROR_FINDING_PROCESS
-			continue
+	work := parallel.NewIntsFeeder(input.ProcessIds...)
+
+	work.Start(func() {
+		for processId := range work.Talk {
+			process, e := os.FindProcess(processId)
+			if abstract.PrintErrorWithError(e, input.Stderr, "error: %v") {
+				exitCode = signal.ERROR_FINDING_PROCESS
+				continue
+			}
+
+			// request termination
+			if Signal(input, process, syscall.SIGTERM) { continue }
+
+			// request termination; terminal quit signal
+			if Signal(input, process, syscall.SIGINT) { continue }
+
+			// request termination and dump core
+			if Signal(input, process, syscall.SIGQUIT) { continue }
+
+			// kill cannot be caught nor ignored
+			if input.Force {
+				process.Signal(syscall.SIGKILL)
+			} /* TODO else if input.Interactive {
+				signal(input, process, syscall.SIGSTOP)
+			}*/
+
+			abstract.PrintError(e, input.Stderr, `process '%v' did not respond to SIGTERM, SIGINT nor SIGQUIT. ` +
+						`i suggest deleting the non conformant binary.`, processId)
 		}
-
-		// request termination
-		if Signal(input, process, syscall.SIGTERM) { continue }
-
-		// request termination; terminal quit signal
-		if Signal(input, process, syscall.SIGINT) { continue }
-
-		// request termination and dump core
-		if Signal(input, process, syscall.SIGQUIT) { continue }
-
-		// kill cannot be caught nor ignored
-		if input.Force {
-			process.Signal(syscall.SIGKILL)
-		} /* TODO else if input.Interactive {
-			signal(input, process, syscall.SIGSTOP)
-		}*/
-
-		abstract.PrintError(e, input.Stderr, `process '%v' did not respond to SIGTERM, SIGINT nor SIGQUIT. ` +
-					`i suggest deleting the non conformant binary.`, processId)
-	}
-
+	})
 	return
 }
 
