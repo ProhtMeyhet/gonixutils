@@ -15,6 +15,7 @@ import (
 )
 
 // remove filesystem entries given in the input.PathList
+// FIXME: use abstract.OutputInterface
 func Rm(input *Input) (exitCode uint8) {
 	work := parallel.NewStringsFeeder(input.PathList...)
 
@@ -23,11 +24,12 @@ func Rm(input *Input) (exitCode uint8) {
 			// TODO more fine grained locking if Interactive (stats parallel)
 			if input.Interactive { work.Lock() }
 			e, _ := Remove(input, path)
-			if input.VerboseLevel >= 2 { io.WriteString(input.Stdout, fmt.Sprintf("deleted '%v'\n", path)) }
 			if e != nil {
 				io.WriteString(input.Stderr, e.Error() + "\n")
 				// FIXME more fine grained error
 				exitCode = abstract.FAILED
+			} else if input.VerboseLevel >= 2 {
+				io.WriteString(input.Stdout, fmt.Sprintf("deleted '%v'\n", path))
 			}
 			if input.Interactive { work.Unlock() }
 		}
@@ -64,8 +66,9 @@ func Remove(input *Input, path string) (e error, allRemoved bool) {
 
 // removes a directory, if input.Recurive also all it's contents.
 func removeDir(path string, input *Input) (e error, allRemoved bool) {
-	names, e := iotool.ListDirectory(path); if e != nil { return }
+	count := 0
 
+	names, e := iotool.ListDirectory(path); if e != nil { return }
 	if input.Interactive {
 		if len(names) == 0 {
 			fmt.Fprintf(input.Stdout, "directory '%s' empty.\n", path)
@@ -86,13 +89,15 @@ func removeDir(path string, input *Input) (e error, allRemoved bool) {
 
 	// remove recursivly
 	for _, name := range names {
-		e, allRemoved = Remove(input, path + string(os.PathSeparator) + name)
-		if e != nil { return }
-	}
+		deletePath := path + string(os.PathSeparator) + name
+		e, _ = Remove(input, deletePath)
+		// FIXME report e to output
+		if e == nil { count++ }
+	}; if count == len(names) { allRemoved = true }
 
 	// recursivly remove failed, can't remove parent
 	if !allRemoved {
-		if input.Interactive { fmt.Fprintf(input.Stdout, "cannot remove '%s', not empty\n", path) }
+		fmt.Fprintf(input.Stdout, "cannot remove '%s', not empty\n", path)
 		return
 	}
 
