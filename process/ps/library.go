@@ -31,9 +31,17 @@ func Processes(input *Input, output abstract.OutputInterface) (exitCode uint8) {
 }
 
 func Overview(input *Input, output abstract.OutputInterface) (exitCode uint8) {
-	if input.Dump { output.ToggleLinesManual() }
-	myProcesses := processes.FindMyAll()
-	for process := range myProcesses {
+    if input.Dump && !output.LinesManual() { output.ToggleLinesManual() }
+	var useProcesses <-chan *processes.ProcessInfo
+	if input.All {
+		useProcesses = processes.FindAll()
+	} else {
+		useProcesses = processes.FindMyAll()
+	}
+
+	count := 0
+	for process := range useProcesses {
+		count++
 		if input.Dump {
 			output.WriteFormatted(decorate(input) + "\n", process.Id(), process.CommandLine())
 		} else {
@@ -41,7 +49,7 @@ func Overview(input *Input, output abstract.OutputInterface) (exitCode uint8) {
 		}
 	}
 
-	output.WriteFormatted("\nTotal: %v", len(myProcesses))
+	output.WriteFormatted("\nTotal: %v", count)
 
 	return
 }
