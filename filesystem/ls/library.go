@@ -21,7 +21,7 @@ import(
 func List(input *Input, paths []string, mainOutput abstract.OutputInterface) (exitCode uint8) {
 	work := parallel.NewStringsFeeder(paths...); initialise(input, mainOutput); directoryCount := 0
 	work.Start(func() {
-		iwork := parallel.NewWork(work.Workers())
+		iwork := parallel.NewWorkManual(work.Workers())
 		entries := make(chan *Entry, iwork.SuggestBufferSize(0)); entry := &Entry{ output: mainOutput }
 
 		iwork.Feed(func() {
@@ -121,7 +121,7 @@ func WriteEntryLong(input *Input, entry *Entry) {
 	name := input.decorate(entry.base, entry.info); owner := "?"; group := "???"
 	mode := os.FileMode(0); modificationTime := time.Time{}; size := int64(0)
 	if entry.info != nil {
-		info := iotool.NewFileInfo(entry.path, entry.info)
+		info := iotool.NewOsFileInfo(entry.path, entry.info)
 		mode = info.Mode(); modificationTime = info.ModTime()
 		size = info.Size(); owner = info.Owner(); group = info.Group()
 	}

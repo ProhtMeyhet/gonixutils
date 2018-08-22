@@ -27,10 +27,10 @@ func (flags *SyncFlags) GetInput() *sync.Input {
 func (flags *SyncFlags) Parse() {
 	optarg.Header("Options for " + os.Args[0])
 	optarg.Add("d", "data", "sync data of [FILE] without metadata", false)
-	optarg.Add("f", "file", "sync [FILE]", true)
+	optarg.Add("f", "file", "sync only [FILE], but not its parent directory", false)
+	optarg.Add("s", "filesystem", "sync filesystem of [FILE]", false)
 	// TODO
 	// optarg.Add("r", "recursive", "if [FILE] is a directory, recursivly sync each file", true)
-	// optarg.Add("s", "filesystem", "sync filesystem of [FILE]", true)
 
 	flags.AddGeneralOptions()
 

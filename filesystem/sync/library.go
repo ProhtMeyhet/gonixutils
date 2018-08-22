@@ -1,11 +1,15 @@
 package sync
 
 import(
+	"path/filepath"
 	"syscall"
+
+	"golang.org/x/sys/unix"
 
 	"github.com/ProhtMeyhet/gonixutils/library/abstract"
 
 	"github.com/ProhtMeyhet/libgosimpleton/iotool"
+	"github.com/ProhtMeyhet/libgosimpleton/parallel"
 )
 
 // Your job is being a professor and researcher: That's one hell of a good excuse for some of the
@@ -45,36 +49,42 @@ func Synchronize(input *Input, output abstract.OutputInterface) (exitCode uint8)
 	// fifo's (pipes) -> open with NONBLOCK. after that, discard NONBLOCK with fcntl
 	// @see coreutils
 	helper := iotool.WriteOnly().ToggleDoNotTestForDirectory()
-	for _, path := range input.PathList {
-		file, e := iotool.Open(helper, path); if output.WriteE(e) {
-			if exitCode == 0 { exitCode = abstract.ERROR_OPENING_FILE }
-			continue
-		}
 
-		switch {
-		case input.File:
-			e = syscall.Fsync(int(file.Fd()))
-		case input.FileSystem:
-			output.WriteError("Filesystem sync of [FILE] is not implemented!")
-		/*
-			// TODO, SYNCFS is not in syscall for x86 & x86_64
-			_, _, errNo := syscall.Syscall(syscall.SYS_SYNCFS, file.Fd(), 0, 0, 0)
-			if errNo > 0 {
-				if errNo == syscall.EABDF {
-					e = ERROR_BAD_FILE_DESCRIPTOR
+	work := parallel.NewStringsFeeder(input.PathList...)
+	work.Start(func() {
+		for path := range work.Talk {
+			file, e := iotool.Open(helper, path); if output.WriteE(e) {
+				if exitCode == 0 { exitCode = abstract.ERROR_OPENING_FILE }
+				continue
+			}
+
+			switch {
+			case input.File:
+				e = file.Sync()
+			case input.FileSystem:
+				e = unix.Syncfs(int(file.Fd()))
+			case input.Data:
+				e = syscall.Fdatasync(int(file.Fd()))
+			default:
+				e = file.Sync()
+				if e == nil {
+					directoryPath := filepath.Dir(path)
+					directory, ie := iotool.OpenDirectory(directoryPath)
+					if ie == nil {
+						directory.Sync(); directory.Close()
+					} else {
+						e = ie
+					}
 				}
 			}
-		*/
-		default:
-			e = syscall.Fdatasync(int(file.Fd()))
+
+			if output.WriteE(e) && exitCode == 0 { exitCode = abstract.PARTLY }
+
+			file.Close(); file = nil
 		}
+	})
 
-		if output.WriteE(e) && exitCode == 0 { exitCode = abstract.PARTLY }
-
-		file.Close(); file = nil
-	}
-
-	return
+	work.Wait(); return
 }
 
 // returns true and the given error, if more then one value is true
