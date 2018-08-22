@@ -33,7 +33,7 @@ func Processes(input *Input, output abstract.OutputInterface) (exitCode uint8) {
 func Overview(input *Input, output abstract.OutputInterface) (exitCode uint8) {
 	if input.Dump { output.ToggleLinesManual() }
 	myProcesses := processes.FindMyAll()
-	for _, process := range myProcesses {
+	for process := range myProcesses {
 		if input.Dump {
 			output.WriteFormatted(decorate(input) + "\n", process.Id(), process.CommandLine())
 		} else {
@@ -66,7 +66,7 @@ func ListProcessesByName(input *Input, output abstract.OutputInterface, process 
 				process := processes.FindYoungestByName(name)
 				out(input, output, name, process)
 			default:
-				for _, process := range processes.FindByName(name) {
+				for process := range processes.FindByName(name) {
 					out(input, output, name, process)
 				}
 			}
